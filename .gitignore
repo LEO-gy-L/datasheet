@@ -1,5 +1,16 @@
+# 密钥 
 .env
+# Python 虚拟环境与缓存
 .venv/
 __pycache__/
 *.pyc
+# 建库产物 —— 可由 step3 重建
 vectorstore/
+data/
+# 原始 PDF —— 体积大，README 里写清去哪下载即可
+datasheets/*.pdf
+# 临时底稿
+requirements_freeze.txt
+# 前端依赖与构建产物
+frontend/node_modules/
+frontend/dist/

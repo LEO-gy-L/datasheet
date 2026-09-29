@@ -92,12 +92,23 @@ def ask(req: AskRequest):
     # (3) 调模型
     response = model.invoke(prompt)
 
-    # (4) 整理出处（去重）
+    # (4) 整理出处（去重）。
+    #     带上页码，前端才能显示"这条答案来自第几页"。
+    #     用 list 而不是 set：set 的迭代顺序每次都不一样，
+    #     同一个问题问两次、来源顺序会跳来跳去。
     sources = []
     for c in chunks:
         name = Path(c.metadata.get("source", "未知")).name
-        if name not in sources:
-            sources.append(name)
+        ps = c.metadata.get("page_start")
+        pe = c.metadata.get("page_end")
+        if ps and pe and pe != ps:
+            label = f"{name} 第 {ps}-{pe} 页"
+        elif ps:
+            label = f"{name} 第 {ps} 页"
+        else:
+            label = name
+        if label not in sources:
+            sources.append(label)
 
     return {
         "answer": response.content,

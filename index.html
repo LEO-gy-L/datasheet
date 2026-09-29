@@ -1,161 +1,45 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Datasheet 智能问答系统</title>
-<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-    background: #f5f5f7;
-    color: #1d1d1f;
-    min-height: 100vh;
-    padding: 28px 20px 40px;
-  }
-
-  .wrap { max-width: 860px; margin: 0 auto; }
-
-  /* ===== 顶部 ===== */
-  .topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 48px;
-  }
-  .brand { font-size: 15px; letter-spacing: .3px; color: #1d1d1f; }
-  .brand b { font-weight: 600; }
-
-  .status {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 13px; color: #6e6e73;
-    background: #fff; padding: 7px 14px; border-radius: 999px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06);
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #c7c7cc; }
-  .dot.ok { background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,.15); }
-  .dot.bad { background: #ff3b30; box-shadow: 0 0 0 3px rgba(255,59,48,.15); }
-
-  /* ===== 标题区 ===== */
-  h1 {
-    font-size: 46px; font-weight: 700; line-height: 1.2;
-    background: linear-gradient(95deg, #3b82f6 0%, #8b5cf6 55%, #d946ef 100%);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -1px;
-  }
-  .sub { margin-top: 14px; font-size: 17px; color: #6e6e73; }
-
-  .badges { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .badge {
-    font-size: 12.5px; color: #4b5563; background: #fff;
-    border: 1px solid #e5e7eb; border-radius: 999px; padding: 5px 12px;
-  }
-
-  /* ===== 聊天卡片 ===== */
-  .card {
-    margin-top: 28px; background: #fff; border-radius: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.07);
-    overflow: hidden; display: flex; flex-direction: column;
-    height: 520px;
-  }
-
-  .chat {
-    flex: 1; overflow-y: auto; padding: 26px 26px 10px;
-    display: flex; flex-direction: column; gap: 18px;
-    scroll-behavior: smooth;
-  }
-  .chat::-webkit-scrollbar { width: 6px; }
-  .chat::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
-
-  .row { display: flex; }
-  .row.user { justify-content: flex-end; }
-
-  .bubble {
-    max-width: 76%; padding: 13px 17px; font-size: 15px; line-height: 1.7;
-    border-radius: 18px; white-space: pre-wrap; word-break: break-word;
-  }
-  .row.ai .bubble {
-    background: #f5f5f7; color: #1d1d1f;
-    border-bottom-left-radius: 6px;
-  }
-  .row.user .bubble {
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff;
-    border-bottom-right-radius: 6px;
-  }
-
-  .sources { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .src {
-    font-size: 12px; color: #6b7280; background: #fff;
-    border: 1px solid #e5e7eb; padding: 3px 10px; border-radius: 999px;
-  }
-  .meta { margin-top: 7px; font-size: 11.5px; color: #9ca3af; }
-
-  /* 输入中动画 */
-  .typing { display: flex; gap: 5px; padding: 4px 2px; }
-  .typing i {
-    width: 7px; height: 7px; border-radius: 50%; background: #b4b4bb;
-    display: block;
-  }
-
-  /* 欢迎语 */
-  .hello { text-align: center; padding: 30px 10px 6px; }
-  .hello p { color: #6e6e73; font-size: 14.5px; }
-  .chips { display: flex; gap: 9px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
-  .chip {
-    font-size: 13.5px; color: #374151; background: #fff;
-    border: 1px solid #e5e7eb; border-radius: 999px; padding: 9px 16px;
-    cursor: pointer; transition: all .2s;
-  }
-  .chip:hover { border-color: #8b5cf6; color: #8b5cf6; transform: translateY(-2px); }
-
-  /* ===== 输入栏 ===== */
-  .inputbar {
-    padding: 16px 20px 20px; display: flex; gap: 10px; align-items: center;
-    border-top: 1px solid #f0f0f2;
-  }
-  #q {
-    flex: 1; border: 1px solid #e5e7eb; background: #fafafa;
-    border-radius: 999px; padding: 14px 20px; font-size: 15px; outline: none;
-    transition: all .2s; font-family: inherit;
-  }
-  #q:focus { border-color: #8b5cf6; background: #fff; box-shadow: 0 0 0 4px rgba(139,92,246,.1); }
-
-  #send {
-    width: 48px; height: 48px; border: none; border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: transform .2s, opacity .2s; flex-shrink: 0;
-  }
-  #send:hover { transform: scale(1.07); }
-  #send:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-
-  .tip { margin-top: 14px; text-align: center; font-size: 12.5px; color: #9ca3af; }
-</style>
+<link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/nav.css">
+  <link rel="stylesheet" href="css/hero.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/lab.css">
+  <link rel="stylesheet" href="css/responsive.css">
+<!-- 动画库改用本地文件：断网/面试现场也能正常动，不再依赖 CDN -->
+<script src="js/vendor/anime.min.js"></script>
 </head>
 <body>
 <div class="wrap">
 
   <div class="topbar">
-    <div class="brand"><b>Datasheet RAG</b> · 芯片数据手册问答</div>
+    <div class="brand"><b>Datasheet RAG</b> · 芯片数据手册咨询</div>
     <div class="status"><span class="dot" id="dot"></span><span id="statusText">检测后端中…</span></div>
   </div>
 
-  <h1 id="title">数据手册智能问答</h1>
-  <p class="sub" id="sub">把芯片数据手册丢进来，用大白话提问，答案带出处。</p>
+  <h1 id="title">数据手册智能咨询</h1>
+  <p class="sub">把芯片数据手册丢进来，用大白话提问，答案带出处。</p>
 
-  <div class="badges" id="badges">
+  <div class="badges">
     <span class="badge">LangChain</span>
     <span class="badge">FAISS 向量检索</span>
     <span class="badge">DeepSeek 生成</span>
     <span class="badge">FastAPI 后端</span>
   </div>
 
-  <div class="card" id="card">
+  <div class="card">
     <div class="chat" id="chat">
       <div class="hello" id="hello">
-        <p>你好，问我关于数据手册的问题吧</p>
-        <div class="chips" id="chips">
+        <div class="hi">👋 你好，我是数据手册助手</div>
+        <p>问我关于数据手册的问题吧</p>
+        <div class="chips">
           <div class="chip">GPIO 最大输出电流是多少？</div>
           <div class="chip">待机功耗多少？</div>
           <div class="chip">支持哪些通信接口？</div>
@@ -173,133 +57,15 @@
     </div>
   </div>
 
-  <p class="tip">后端没反应？先在项目目录双击 start_backend.bat 启动服务</p>
+  <p class="tip">后端没反应？先在项目目录双击 <code>start_backend.bat</code> 启动服务</p>
 </div>
 
-<script>
-const API = "http://127.0.0.1:8000";
+<script src="js/config.js"></script>
+<script src="js/animation.js"></script>
+<script src="js/chat.js"></script>
+<!-- 主控制器：必须用 js/ 目录里这一版。
+     根目录的旧 app.js 会重复声明 const API，导致 SyntaxError、整段脚本失效。 -->
+<script src="js/app.js"></script>
 
-/* ========== 入场动画（anime.js） ========== */
-anime.timeline()
-  .add({ targets: ".topbar", opacity: [0, 1], translateY: [-12, 0], duration: 600, easing: "easeOutQuad" })
-  .add({ targets: "#title", opacity: [0, 1], translateY: [22, 0], duration: 760, easing: "easeOutQuart" }, "-=350")
-  .add({ targets: "#sub", opacity: [0, 1], translateY: [14, 0], duration: 640, easing: "easeOutQuart" }, "-=520")
-  .add({ targets: ".badge", opacity: [0, 1], translateY: [10, 0], delay: anime.stagger(80), duration: 520 }, "-=420")
-  .add({ targets: "#card", opacity: [0, 1], translateY: [26, 0], scale: [.985, 1], duration: 780, easing: "easeOutQuart" }, "-=380")
-  .add({ targets: ".chip", opacity: [0, 1], translateY: [10, 0], delay: anime.stagger(90), duration: 480 }, "-=400");
-
-/* ========== 后端状态检测 ========== */
-const dot = document.getElementById("dot");
-const statusText = document.getElementById("statusText");
-
-async function checkBackend() {
-  try {
-    const r = await fetch(API + "/api/health", { cache: "no-store" });
-    if (!r.ok) throw new Error();
-    dot.className = "dot ok";
-    statusText.textContent = "后端已连接";
-  } catch (e) {
-    dot.className = "dot bad";
-    statusText.textContent = "后端未启动";
-  }
-}
-checkBackend();
-setInterval(checkBackend, 8000);
-
-/* ========== 聊天逻辑 ========== */
-const chat = document.getElementById("chat");
-const input = document.getElementById("q");
-const sendBtn = document.getElementById("send");
-const hello = document.getElementById("hello");
-
-function addBubble(text, who) {
-  const row = document.createElement("div");
-  row.className = "row " + who;
-  const bubble = document.createElement("div");
-  bubble.className = "bubble";
-  bubble.textContent = text;
-  row.appendChild(bubble);
-  chat.appendChild(row);
-  chat.scrollTop = chat.scrollHeight;
-
-  anime({ targets: row, opacity: [0, 1], translateY: [16, 0], duration: 420, easing: "easeOutQuart" });
-  return { row, bubble };
-}
-
-function addTyping() {
-  const row = document.createElement("div");
-  row.className = "row ai";
-  row.innerHTML = '<div class="bubble"><div class="typing"><i></i><i></i><i></i></div></div>';
-  chat.appendChild(row);
-  chat.scrollTop = chat.scrollHeight;
-  anime({ targets: row, opacity: [0, 1], translateY: [12, 0], duration: 320, easing: "easeOutQuad" });
-  anime({
-    targets: row.querySelectorAll(".typing i"),
-    translateY: [-5, 0], opacity: [.35, 1],
-    delay: anime.stagger(140), direction: "alternate", loop: true,
-    duration: 420, easing: "easeInOutSine"
-  });
-  return row;
-}
-
-async function ask(question) {
-  if (!question.trim()) return;
-  if (hello) hello.remove();
-
-  addBubble(question, "user");
-  input.value = "";
-  input.disabled = true;
-  sendBtn.disabled = true;
-
-  const typingRow = addTyping();
-
-  try {
-    const res = await fetch(API + "/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: question })
-    });
-    if (!res.ok) throw new Error("接口返回 " + res.status);
-    const data = await res.json();
-
-    typingRow.remove();
-
-    const { row, bubble } = addBubble(data.answer, "ai");
-
-    if (data.sources && data.sources.length) {
-      const box = document.createElement("div");
-      box.className = "sources";
-      data.sources.forEach(s => {
-        const tag = document.createElement("span");
-        tag.className = "src";
-        tag.textContent = "📎 " + s;
-        box.appendChild(tag);
-      });
-      bubble.appendChild(box);
-    }
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-    meta.textContent = "耗时 " + data.seconds + " 秒";
-    bubble.appendChild(meta);
-
-    anime({ targets: row.querySelectorAll(".src, .meta"), opacity: [0, 1], translateY: [6, 0], delay: anime.stagger(90), duration: 380 });
-  } catch (e) {
-    typingRow.remove();
-    addBubble("出错了：" + e.message + "\n请确认后端已启动（双击 start_backend.bat）。", "ai");
-  } finally {
-    input.disabled = false;
-    sendBtn.disabled = false;
-    input.focus();
-  }
-}
-
-sendBtn.addEventListener("click", () => ask(input.value));
-input.addEventListener("keydown", e => { if (e.key === "Enter") ask(input.value); });
-
-document.querySelectorAll(".chip").forEach(chip => {
-  chip.addEventListener("click", () => ask(chip.textContent));
-});
-</script>
 </body>
 </html>

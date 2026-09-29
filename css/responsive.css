@@ -1,0 +1,12 @@
+/* responsive.css —— 媒体查询 / 断点覆盖 + 动效偏好 */
+
+@media (max-width: 600px) {
+  h1 { font-size: 34px; }
+  .card { height: 70vh; }
+  .bubble { max-width: 86%; }
+}
+
+/* 尊重系统"减弱动效"设置 */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

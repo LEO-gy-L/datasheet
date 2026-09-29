@@ -11,7 +11,6 @@
 输入 quit 退出。
 """
 
-import os
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_community.embeddings import ZhipuAIEmbeddings
@@ -69,8 +68,21 @@ def ask(question: str) -> None:
     print("回答：", response.content)
     print("-" * 60)
 
-    # (6) 打印出处：让用户能核对答案是从哪份文件来的（面试亮点：可追溯）
-    sources = {Path(chunk.metadata.get("source", "未知")).name for chunk in related_chunks}
+    # (6) 打印出处：让用户能核对答案是从哪份文件、第几页来的（面试亮点：可追溯）
+    #     用 list 而不是 set：set 的迭代顺序每次都不一样，来源顺序会跳
+    sources: list[str] = []
+    for chunk in related_chunks:
+        name = Path(chunk.metadata.get("source", "未知")).name
+        ps = chunk.metadata.get("page_start")
+        pe = chunk.metadata.get("page_end")
+        if ps and pe and pe != ps:
+            label = f"{name} 第 {ps}-{pe} 页"
+        elif ps:
+            label = f"{name} 第 {ps} 页"
+        else:
+            label = name
+        if label not in sources:
+            sources.append(label)
     print("答案来源：", "、".join(sources))
     print("token 用量：", response.usage_metadata)
     print("=" * 60)

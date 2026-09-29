@@ -9,7 +9,6 @@
 面试演示就用这个，比命令行有说服力得多。
 """
 
-import os
 from pathlib import Path
 from dotenv import load_dotenv
 import streamlit as st
@@ -77,7 +76,20 @@ if question:
             response = model.invoke(prompt)
             answer = response.content
 
-            sources = {Path(c.metadata.get("source", "未知")).name for c in related_chunks}
+            # 出处带上页码；用 list 保持顺序稳定（set 每次顺序都不同）
+            sources: list[str] = []
+            for c in related_chunks:
+                name = Path(c.metadata.get("source", "未知")).name
+                ps = c.metadata.get("page_start")
+                pe = c.metadata.get("page_end")
+                if ps and pe and pe != ps:
+                    label = f"{name} 第 {ps}-{pe} 页"
+                elif ps:
+                    label = f"{name} 第 {ps} 页"
+                else:
+                    label = name
+                if label not in sources:
+                    sources.append(label)
             full_answer = answer + "\n\n---\n📎 来源：" + "、".join(sources)
 
             st.write(full_answer)

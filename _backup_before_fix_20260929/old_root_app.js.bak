@@ -1,0 +1,140 @@
+/* ============================================================
+   Datasheet RAG · 逻辑
+   三端拆分后的独立脚本，专注交互与接口调用
+   ============================================================ */
+const API = "http://127.0.0.1:8000";
+
+/* ---------- 入场动画（anime.js） ---------- */
+const intro = anime.timeline();
+intro
+  .add({ targets: ".topbar", opacity: [0, 1], translateY: [-12, 0], duration: 600, easing: "easeOutQuad" })
+  .add({ targets: "h1", opacity: [0, 1], translateY: [24, 0], duration: 780, easing: "easeOutQuart" }, "-=350")
+  .add({ targets: ".sub", opacity: [0, 1], translateY: [14, 0], duration: 640, easing: "easeOutQuart" }, "-=520")
+  .add({ targets: ".badge", opacity: [0, 1], translateY: [10, 0], delay: anime.stagger(80), duration: 520 }, "-=420")
+  .add({ targets: "#card", opacity: [0, 1], translateY: [26, 0], scale: [.985, 1], duration: 780, easing: "easeOutQuart" }, "-=380")
+  .add({ targets: ".chip", opacity: [0, 1], translateY: [10, 0], delay: anime.stagger(90), duration: 480 }, "-=400");
+
+/* ---------- 后端状态检测 ---------- */
+const dot = document.getElementById("dot");
+const statusText = document.getElementById("statusText");
+
+async function checkBackend() {
+  try {
+    const r = await fetch(API + "/api/health", { cache: "no-store" });
+    if (!r.ok) throw new Error();
+    dot.className = "dot ok";
+    statusText.textContent = "后端已连接";
+  } catch (e) {
+    dot.className = "dot bad";
+    statusText.textContent = "后端未启动";
+  }
+}
+checkBackend();
+setInterval(checkBackend, 8000);
+
+/* ---------- 聊天逻辑 ---------- */
+const chat = document.getElementById("chat");
+const input = document.getElementById("q");
+const sendBtn = document.getElementById("send");
+const hello = document.getElementById("hello");
+
+function makeRow(who) {
+  const row = document.createElement("div");
+  row.className = "row " + who;
+
+  // AI 加头像，用户头像靠右
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = who === "user" ? "我" : "AI";
+  row.appendChild(avatar);
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  row.appendChild(bubble);
+
+  chat.appendChild(row);
+  return { row, bubble };
+}
+
+function addBubble(text, who) {
+  const { row, bubble } = makeRow(who);
+  bubble.textContent = text;
+  chat.scrollTop = chat.scrollHeight;
+  anime({ targets: row, opacity: [0, 1], translateY: [16, 0], duration: 420, easing: "easeOutQuart" });
+  return { row, bubble };
+}
+
+function addTyping() {
+  const { row, bubble } = makeRow("ai");
+  bubble.innerHTML = '<div class="typing"><i></i><i></i><i></i></div>';
+  chat.scrollTop = chat.scrollHeight;
+  anime({ targets: row, opacity: [0, 1], translateY: [12, 0], duration: 320, easing: "easeOutQuad" });
+  anime({
+    targets: bubble.querySelectorAll(".typing i"),
+    translateY: [-5, 0], opacity: [.35, 1],
+    delay: anime.stagger(140), direction: "alternate", loop: true,
+    duration: 420, easing: "easeInOutSine"
+  });
+  return row;
+}
+
+async function ask(question) {
+  if (!question.trim()) return;
+  if (hello) hello.remove();
+
+  addBubble(question, "user");
+  input.value = "";
+  input.disabled = true;
+  sendBtn.disabled = true;
+
+  const typingRow = addTyping();
+
+  try {
+    const res = await fetch(API + "/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: question })
+    });
+    if (!res.ok) throw new Error("接口返回 " + res.status);
+    const data = await res.json();
+
+    typingRow.remove();
+
+    const { row, bubble } = addBubble(data.answer, "ai");
+
+    if (data.sources && data.sources.length) {
+      const box = document.createElement("div");
+      box.className = "sources";
+      data.sources.forEach(s => {
+        const tag = document.createElement("span");
+        tag.className = "src";
+        tag.textContent = "📎 " + s;
+        box.appendChild(tag);
+      });
+      bubble.appendChild(box);
+    }
+
+    if (data.seconds !== undefined) {
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = "耗时 " + data.seconds + " 秒";
+      bubble.appendChild(meta);
+    }
+
+    anime({ targets: row.querySelectorAll(".src, .meta"), opacity: [0, 1], translateY: [6, 0], delay: anime.stagger(90), duration: 380 });
+  } catch (e) {
+    typingRow.remove();
+    addBubble("出错了：" + e.message + "\n请确认后端已启动（双击 start_backend.bat）。", "ai");
+  } finally {
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+sendBtn.addEventListener("click", () => ask(input.value));
+input.addEventListener("keydown", e => { if (e.key === "Enter") ask(input.value); });
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => ask(chip.textContent));
+});
