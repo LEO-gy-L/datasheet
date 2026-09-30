@@ -1,5 +1,7 @@
 /* app.js —— 主控制器：后端检测 + 问答接口 + 事件绑定 */
-
+import { API , dot, statusText, input, sendBtn, hello } from "./config.js" ; 
+import { animateMeta } from "./animation.js" ;
+import { addBubble, addTyping } from "./chat.js" ;
 /* —— 后端状态检测 —— */
 async function checkBackend() {
   try {

@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="css/lab.css">
   <link rel="stylesheet" href="css/responsive.css">
 <!-- 动画库改用本地文件：断网/面试现场也能正常动，不再依赖 CDN -->
-<script src="js/vendor/anime.min.js"></script>
+
 </head>
 <body>
 <div class="wrap">
@@ -60,12 +60,7 @@
   <p class="tip">后端没反应？先在项目目录双击 <code>start_backend.bat</code> 启动服务</p>
 </div>
 
-<script src="js/config.js"></script>
-<script src="js/animation.js"></script>
-<script src="js/chat.js"></script>
-<!-- 主控制器：必须用 js/ 目录里这一版。
-     根目录的旧 app.js 会重复声明 const API，导致 SyntaxError、整段脚本失效。 -->
-<script src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 
 </body>
 </html>

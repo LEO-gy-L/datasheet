@@ -2,116 +2,77 @@
 """
 后端 API 服务（FastAPI）
 =========================
-作用：把 RAG 问答能力包装成一个网址接口，供网页（web/index.html）调用。
+作用：把 RAG 问答能力包装成一个网址接口，供网页（index.html）调用。
       网页负责好看，这里负责干活——这就是"前后端分离"。
 
-启动方法（在 datasheet-rag 目录下）：
+启动方法（在 datasheet 目录下）：
     .venv\\Scripts\\python -m uvicorn src.api:app --host 127.0.0.1 --port 8000
 
 启动后浏览器访问 http://127.0.0.1:8000/docs 能看到自动生成的接口文档。
 """
 
-import time
+import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
+# 让本文件以 uvicorn 模块方式启动时，也能 import 到同目录的 rag_engine
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from langchain_community.embeddings import ZhipuAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_deepseek import ChatDeepSeek
+from pydantic import BaseModel, Field
 
-# ---------- 1. 路径与配置 ----------
-BASE_DIR = Path(__file__).resolve().parents[1]
-STORE_DIR = BASE_DIR / "vectorstore"
-load_dotenv(BASE_DIR / ".env")
+from rag_engine import RAGEngine   # noqa: E402
 
-# ---------- 2. 加载向量库和模型（服务启动时只加载一次） ----------
-if not (STORE_DIR / "index.faiss").exists():
-    raise SystemExit("没找到向量库，请先运行：.venv\\Scripts\\python src\\step3_vectorstore.py")
 
-embeddings = ZhipuAIEmbeddings(model="embedding-3")
-vectorstore = FAISS.load_local(
-    str(STORE_DIR),
-    embeddings,
-    allow_dangerous_deserialization=True,
-)
-model = ChatDeepSeek(model="deepseek-chat", temperature=0)
+# ---------- 加载 RAG 引擎（服务启动时只加载一次） ----------
+# 如果向量库不存在，rag_engine 会抛 SystemExit，这里转成人话
+try:
+    engine = RAGEngine()
+except SystemExit as e:
+    raise RuntimeError(str(e)) from None
 
-# ---------- 3. 创建 FastAPI 应用 ----------
+
+# ---------- 创建 FastAPI 应用 ----------
 app = FastAPI(title="Datasheet RAG API", version="1.0")
 
-# CORS：允许网页从别的地址（比如你双击打开的 html 文件）调用这个接口
-# 没有这段，浏览器会因为"跨域"直接拦截请求
+# CORS：只允许本地来源。
+# "null" 是为了兼容"双击打开本地 index.html"（file:// 协议的 Origin 是字符串 null）。
+# 生产环境要改成你的真实域名，否则任何网站都能调你的接口、花你的 API Key。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # 允许任何来源，本地开发够用
-    allow_methods=["*"],
+    allow_origins=["null", "http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
 
-# ---------- 4. 定义请求体格式 ----------
+# ---------- 定义请求体格式 ----------
 class AskRequest(BaseModel):
-    """POST /api/ask 收到的 JSON 长这样：{"question": "GPIO 电流多少"}"""
-    question: str
+    """POST /api/ask 收到的 JSON：{"question": "...", "source": "可选"}"""
+    # max_length=2000：防止有人把整本手册粘进来，一次请求烧掉几十万 token
+    question: str = Field(..., min_length=1, max_length=2000)
+    source: str | None = None   # 想只看某份手册时传，例如 "STM32F103C8_Datasheet.pdf"
 
 
-# ---------- 5. 接口：健康检查（网页用它判断后端有没有启动） ----------
+# ---------- 接口：健康检查（网页用它判断后端有没有启动） ----------
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
-# ---------- 6. 接口：提问（核心） ----------
+# ---------- 接口：提问（核心） ----------
 @app.post("/api/ask")
 def ask(req: AskRequest):
-    question = req.question.strip()
-    if not question:
-        raise HTTPException(status_code=400, detail="问题不能为空")
-
-    start = time.time()
-
-    # (1) 检索最相关的 4 块原文
-    chunks = vectorstore.similarity_search(question, k=4)
-    context = "\n\n".join(c.page_content for c in chunks)
-
-    # (2) 拼 prompt，要求只根据资料回答
-    prompt = f"""你是一个芯片数据手册问答助手。请只根据下面提供的资料回答问题。
-如果资料里没有答案，就直接说"数据手册中没有提到"，不要自己编。
-
-【资料】
-{context}
-
-【问题】
-{question}
-
-【回答】"""
-
-    # (3) 调模型
-    response = model.invoke(prompt)
-
-    # (4) 整理出处（去重）。
-    #     带上页码，前端才能显示"这条答案来自第几页"。
-    #     用 list 而不是 set：set 的迭代顺序每次都不一样，
-    #     同一个问题问两次、来源顺序会跳来跳去。
-    sources = []
-    for c in chunks:
-        name = Path(c.metadata.get("source", "未知")).name
-        ps = c.metadata.get("page_start")
-        pe = c.metadata.get("page_end")
-        if ps and pe and pe != ps:
-            label = f"{name} 第 {ps}-{pe} 页"
-        elif ps:
-            label = f"{name} 第 {ps} 页"
-        else:
-            label = name
-        if label not in sources:
-            sources.append(label)
+    try:
+        res = engine.ask(req.question, source=req.source)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except RuntimeError as e:
+        # 模型调用失败（网络/余额/限流）-> 503，前端能显示可读原因
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     return {
-        "answer": response.content,
-        "sources": sources,
-        "seconds": round(time.time() - start, 2),
+        "answer": res["answer"],
+        "sources": res["sources"],
+        "seconds": res["seconds"],
     }

@@ -1,16 +1,24 @@
-# 密钥 
+# 密钥 —— 绝对禁止入库
 .env
+
 # Python 虚拟环境与缓存
 .venv/
 __pycache__/
 *.pyc
-# 建库产物 —— 可由 step3 重建
+
+# 建库产物 —— 可由 p1_2_index.py 重建
 vectorstore/
+
+# data/ 下全是 PDF 解析/清洗/切块的中间产物 —— 可由 step0~step2 重建
 data/
-# 原始 PDF —— 体积大，README 里写清去哪下载即可
+
+# 原始 PDF —— 体积大、可能有版权，README 里写清去哪下载
 datasheets/*.pdf
-# 临时底稿
-requirements_freeze.txt
+
 # 前端依赖与构建产物
-frontend/node_modules/
-frontend/dist/
+node_modules/
+dist/
+
+# 本地备份目录
+_backup_before_fix_20260929/
+

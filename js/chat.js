@@ -1,3 +1,6 @@
+import { chat } from "./config.js" ; 
+import { animateRowIn, animateTyping } from "./animation.js" ; // 拿两个动画函数 
+const marked = window . marked ;
 /* chat.js —— 聊天气泡渲染 */
 function makeRow(who) {
   const row = document.createElement("div");
@@ -16,7 +19,7 @@ function makeRow(who) {
   return { row, bubble };
 }
 
-function addBubble(text, who) {
+export function addBubble(text, who) {
   const { row, bubble } = makeRow(who);
   bubble.innerHTML = marked.parse(text);
   chat.scrollTop = chat.scrollHeight;
@@ -24,7 +27,7 @@ function addBubble(text, who) {
   return { row, bubble };
 }
 
-function addTyping() {
+export function addTyping() {
   const { row, bubble } = makeRow("ai");
   bubble.innerHTML = '<div class="typing"><i></i><i></i><i></i></div>';
   chat.scrollTop = chat.scrollHeight;

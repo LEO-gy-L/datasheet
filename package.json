@@ -1,0 +1,17 @@
+{
+  "name": "datasheet",
+  "version": "1.0.0",
+  "description": "芯片数据手册智能问答：把 PDF/TXT 数据手册丢进 `datasheets/` 文件夹， 就能用自然语言提问（如\"GPIO 最大输出电流多少\"），系统检索原文后由 DeepSeek 生成答案，并给出来源**和页码**。",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "dependencies": {
+    "animejs": "^4.5.0"
+  }
+}
