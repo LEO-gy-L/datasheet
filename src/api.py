@@ -40,9 +40,10 @@ app = FastAPI(title="Datasheet RAG API", version="1.0")
 # 生产环境要改成你的真实域名，否则任何网站都能调你的接口、花你的 API Key。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["null", "http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=["null", "http://localhost:8000", "http://127.0.0.1:8000", "http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
+
 )
 
 

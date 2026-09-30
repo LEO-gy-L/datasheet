@@ -17,50 +17,7 @@
 
 </head>
 <body>
-<div class="wrap">
-
-  <div class="topbar">
-    <div class="brand"><b>Datasheet RAG</b> · 芯片数据手册咨询</div>
-    <div class="status"><span class="dot" id="dot"></span><span id="statusText">检测后端中…</span></div>
-  </div>
-
-  <h1 id="title">数据手册智能咨询</h1>
-  <p class="sub">把芯片数据手册丢进来，用大白话提问，答案带出处。</p>
-
-  <div class="badges">
-    <span class="badge">LangChain</span>
-    <span class="badge">FAISS 向量检索</span>
-    <span class="badge">DeepSeek 生成</span>
-    <span class="badge">FastAPI 后端</span>
-  </div>
-
-  <div class="card">
-    <div class="chat" id="chat">
-      <div class="hello" id="hello">
-        <div class="hi">👋 你好，我是数据手册助手</div>
-        <p>问我关于数据手册的问题吧</p>
-        <div class="chips">
-          <div class="chip">GPIO 最大输出电流是多少？</div>
-          <div class="chip">待机功耗多少？</div>
-          <div class="chip">支持哪些通信接口？</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="inputbar">
-      <input id="q" type="text" placeholder="输入关于数据手册的问题……" autocomplete="off">
-      <button id="send" title="发送">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 19V5M5 12l7-7 7 7"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <p class="tip">后端没反应？先在项目目录双击 <code>start_backend.bat</code> 启动服务</p>
-</div>
-
-<script type="module" src="js/app.js"></script>
-
+  <div id="root"></div>
+  <script type="module" src="/main.jsx"></script>
 </body>
 </html>
