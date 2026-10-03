@@ -1,0 +1,162 @@
+[
+  {
+    "question": "STM32F103C8 的最高主频是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["72 MHz", "72MHz"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A 单值数值。p1 原文：72 MHz maximum frequency"
+  },
+  {
+    "question": "STM32F103C8 用的是什么 CPU 内核？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["Cortex-M3", "Cortex M3"],
+    "expected_source_pages": [1],
+    "type": "概念题",
+    "note": "题型D。p1 原文：Arm 32-bit Cortex-M3 CPU core。注意 PDF 里带 ®，eval.py 的 _normalize 会去掉它"
+  },
+  {
+    "question": "STM32F103C8 的 Flash 容量是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["128 Kbytes", "128 KB", "64 or 128 Kbytes"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A。p1 原文：64 or 128 Kbytes of Flash memory"
+  },
+  {
+    "question": "STM32F103C8 的 SRAM 有多大？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["20 Kbytes", "20 KB"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A。这个事实只在 p1 出现，是最干净的单页题"
+  },
+  {
+    "question": "推荐的工作供电电压是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["2.0 to 3.6 V", "2.0-3.6V", "2.0 ~ 3.6"],
+    "expected_source_pages": [1],
+    "type": "陷阱题",
+    "note": "题型E。故意不含型号名，测 source 过滤是否生效。陷阱：p37 绝对最大额定值是 -0.3~4.0V，答成那个就是错的"
+  },
+  {
+    "question": "VDD 相对 VSS 的绝对最大额定电压上限是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["4.0", "4.0 V", "4.0V"],
+    "expected_source_pages": [37],
+    "type": "边界题",
+    "note": "题型F。与上一题构成对照对：同一颗芯片，工作电压 2.0-3.6V(p1) vs 极限值 4.0V(p37)。能区分这两条才说明检索真的看懂了"
+  },
+  {
+    "question": "STM32F103C8 内部有几个定时器？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["7 timers", "7 个定时器", "7 timers"],
+    "expected_source_pages": [1],
+    "type": "计数题",
+    "note": "题型B 计数。p1 标题行：USB, CAN, 7 timers, 2 ADCs, 9 com. interfaces"
+  },
+  {
+    "question": "STM32F103C8 的 ADC 是多少位、转换时间多少、最多几个通道？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["12-bit", "1 µs", "16 channels"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A 多值。p1 原文：2x 12-bit, 1 us A/D converters (up to 16 channels)"
+  },
+  {
+    "question": "STM32F103C8 外部高速晶振支持的频率范围是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["4 to 16 MHz", "4-16 MHz", "4 to 16"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A。p1 原文：4 to 16 MHz crystal oscillator"
+  },
+  {
+    "question": "STM32F103C8 支持哪几种低功耗模式？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["Sleep, Stop and Standby", "Sleep", "Standby"],
+    "expected_source_pages": [1],
+    "type": "枚举题",
+    "note": "题型G。p1 原文：Sleep, Stop and Standby modes"
+  },
+  {
+    "question": "STM32F103C8 的工作环境温度范围是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["-40 to +85", "-40 to +105", "-40 to 85"],
+    "expected_source_pages": [10],
+    "type": "数值题",
+    "note": "题型A，★非第1页。p10 原文：Ambient temperatures: -40 to +85 C / -40 to +105 C。这条专门测第1页之外的检索能力"
+  },
+  {
+    "question": "STM32F103C8 在 Stop 模式下（稳压器运行模式）的典型供电电流是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
+    "expected_answer_contains": ["23.5", "13.5", "µA"],
+    "expected_source_pages": [44],
+    "type": "表格题",
+    "note": "题型C 表格题，★非第1页。p44 Table 16：23.5 / 13.5 uA。答案只在表格里，正文没有"
+  },
+  {
+    "question": "ATmega328P 是多少位的单片机架构？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["8-bit AVR", "8 位 AVR", "8-bit"],
+    "expected_source_pages": [1],
+    "type": "概念题",
+    "note": "题型D。p1 标题：8-bit AVR Microcontroller。与 STM32 的 32-bit 形成对照"
+  },
+  {
+    "question": "ATmega328P 的 Flash 容量是多少？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["32K bytes", "32Kbytes", "32KB", "32 KB"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A。p1 原文：32K bytes of in-system self-programmable flash。与 STM32 的 128Kbytes 不同，可测跨手册串台"
+  },
+  {
+    "question": "ATmega328P 的 SRAM 和 EEPROM 各是多大？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["2Kbytes", "2K bytes", "1Kbytes", "1K bytes"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A 双值。p1 原文：1Kbytes EEPROM / 2Kbytes internal SRAM"
+  },
+  {
+    "question": "ATmega328P 有多少个可编程 I/O 引脚？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["23 programmable I/O", "23", "23 个"],
+    "expected_source_pages": [2],
+    "type": "计数题",
+    "note": "题型B，★非第1页。p2 原文：23 programmable I/O lines（p7 也写作 23 general purpose I/O lines）"
+  },
+  {
+    "question": "ATmega328P 的 ADC 是多少位、几个通道？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["10-bit", "8-channel", "8 channel"],
+    "expected_source_pages": [1],
+    "type": "数值题",
+    "note": "题型A。p1 原文：8-channel 10-bit ADC。注意与 STM32 的 12-bit 区分"
+  },
+  {
+    "question": "ATmega328P 有几个 PWM 通道？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["Six PWM channels", "6", "六个"],
+    "expected_source_pages": [1],
+    "type": "计数题",
+    "note": "题型B。p1 原文：Six PWM channels"
+  },
+  {
+    "question": "ATmega328P 支持几种睡眠模式？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["Six sleep modes", "6", "Idle", "power-down"],
+    "expected_source_pages": [1],
+    "type": "计数题",
+    "note": "题型B。p1 原文：Six sleep modes: Idle, ADC noise reduction, power-save, power-down, standby, extended standby"
+  },
+  {
+    "question": "推荐的工作供电电压是多少？",
+    "source": "ATmega328P_Datasheet.pdf",
+    "expected_answer_contains": ["1.8", "5.5", "1.8 - 5.5V"],
+    "expected_source_pages": [221],
+    "type": "陷阱题",
+    "note": "题型E，★非第1页。与第5题【同一句问法、不同 source】——这是全表最锋利的一条，直接测 source 过滤。ATmega 是 1.8~5.5V，STM32 是 2.0~3.6V，答串了立刻暴露"
+  }
+]
