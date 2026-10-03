@@ -30,7 +30,7 @@ P0 第 2 步：提取正文（新线路的唯一正文脚本）
 
 【修复 2】路径不锚定项目根
     旧写法用 Path("data/text_v2")，能不能跑取决于你当前在哪个目录敲命令。
-    现在统一用 ROOT = Path(__file__).resolve().parents[1]（= 项目根）拼绝对路径。
+    现在统一用 ROOT（= 项目根）拼绝对路径。
 
 【修复 3】补上"段落合并"merge_lines()
     旧写法直接丢掉，导致 PDF 里被排版成 3 行的同一句话，输出里就是 3 行。
@@ -48,9 +48,9 @@ except ImportError:
 
 
 # ---------- 项目根目录 ----------
-# 本文件在 <项目根>/backend/ 下，parents[0] = src，parents[1] = 项目根。
+# 项目根目录：统一定义在 backend/app/config.py
 # 用绝对路径的好处：不管你在 C:\ 还是项目根敲命令，读写的位置都对。
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 
 
 # ---------- 配置 ----------

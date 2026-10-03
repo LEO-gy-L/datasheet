@@ -1,20 +1,25 @@
 """
 pdfplumber vs PyMuPDF 对比脚本（P0 选型验证用）
-
+==============================================
 目的：用同一份 STM32 手册的同一个表格，对比两个库的输出差异，
       回答"为什么选 PyMuPDF 而不是 pdfplumber"这个问题。
+      这是**已经做完的一次性实验**，代码留在这里当证据（面试可讲）。
 
-运行： .venv\\Scripts\\python backend\\p0_compare_pdfplumber.py
+运行： python -m backend.scripts.compare_pdfplumber
+
+⚠️ 依赖：需要额外装一个包，它不在 requirements.txt 里
+       （因为它只在这一次选型里用到，装进生产环境是浪费）：
+           .venv\\Scripts\\python -m pip install pdfplumber -i https://mirrors.aliyun.com/pypi/simple/
 """
 
 import time
 from pathlib import Path
 
 import fitz  # PyMuPDF，C 实现
-import pdfplumber  # 纯 Python 实现
+import pdfplumber  # 纯 Python 实现 —— 只有这个脚本需要它
 
-# 项目根目录：本文件在 <项目根>/backend/ 下，parents[1] = 项目根
-ROOT = Path(__file__).resolve().parents[1]
+# 项目根目录：统一定义在 backend/app/config.py
+from backend.app.config import ROOT
 PDF = ROOT / "datasheets" / "STM32F103C8_Datasheet.pdf"
 PAGE = 36  # 第 37 页（0 基索引）
 

@@ -13,9 +13,9 @@
     expected_source_pages    : 期望答案来自哪些页
 
 运行方法（在 datasheet 项目根目录下）：
-    .venv\\Scripts\\python backend\\eval.py
-    .venv\\Scripts\\python backend\\eval.py --k 6
-    .venv\\Scripts\\python backend\\eval.py --source STM32F103C8_Datasheet.pdf
+    python -m backend.scripts.evaluate
+    python -m backend.scripts.evaluate --k 6
+    python -m backend.scripts.evaluate --source STM32F103C8_Datasheet.pdf
 
 注意：这一步会真正调用 embedding + DeepSeek 接口，会产生少量费用（几分钱）。
 """
@@ -26,13 +26,13 @@ import statistics
 import sys
 from pathlib import Path
 
-# 让这个脚本无论从哪个目录运行，都能 import 到同目录下的 rag_engine
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+# 把项目根加入 sys.path，这样从任意目录运行都能 import 到 backend 包
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 项目根
 
-from rag_engine import RAGEngine   # noqa: E402
+from backend.app.services.rag_service import RAGEngine   # noqa: E402
 
 
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 DEFAULT_QA = ROOT / "eval" / "qa_pairs.json"
 
 
@@ -152,7 +152,7 @@ def main() -> None:
         print(f"  平均耗时   : {statistics.mean(times):.2f} 秒")
     print()
     print("  提示：检索命中率低 -> 调大 --k 或改切块参数；")
-    print("        检索命中但答案不含关键词 -> 改 backend/rag_engine.py 里的 PROMPT_TEMPLATE。")
+    print("        检索命中但答案不含关键词 -> 改 backend/app/generation/prompts.py 里的 PROMPT_TEMPLATE。")
 
 
 if __name__ == "__main__":

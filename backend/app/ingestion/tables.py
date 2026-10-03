@@ -38,7 +38,7 @@ P0 第 1 步：提取 + 清洗 + 过滤表格（新线路的唯一表格脚本�
     另外补上 drop_placeholder_columns()，把 Col2/Col6 这类占位列整列删掉。
 
 【修复 3】路径不锚定项目根 / 误删风险
-    - 路径统一用 ROOT = Path(__file__).resolve().parents[1] 拼绝对路径
+    - 路径统一用 ROOT 拼绝对路径
     - 清空旧输出前加了护栏：只删 page_*.md，且输出目录名必须以 tables_ 开头，
       防止 --out-dir 传错（比如传成 data/tables_v4）把老成果清空
 """
@@ -54,7 +54,7 @@ except ImportError:
 
 
 # ---------- 项目根目录 ----------
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 
 
 # ---------- 配置 ----------

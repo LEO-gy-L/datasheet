@@ -9,19 +9,19 @@
     用来判断命中率低到底是"切块问题"还是"跨语言语义鸿沟"。
 
 运行方法（在项目根目录）：
-    .venv\Scripts\python backend\diag_crosslingual.py
+    python -m backend.scripts.diag_crosslingual
 """
 
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 项目根
 
 from dotenv import load_dotenv  # noqa: E402
 from langchain_community.embeddings import ZhipuAIEmbeddings  # noqa: E402
 from langchain_community.vectorstores import FAISS  # noqa: E402
 
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 load_dotenv(ROOT / ".env")
 
 STORE_DIR = ROOT / "vectorstore"

@@ -154,16 +154,16 @@ get_drawings() 实测：59 个矩形 / 542 条直线 / 71 条曲线 / 80 个小�
 
 用 OCR 等于**把精确坐标烧成像素，再让模型从像素里猜回来** —— 主动降级。
 
-### 4.2 已实现：`backend/figure_extract.py`
+### 4.2 已实现：`backend/app/ingestion/figures.py`
 
 新增的独立文件，**没有 import、也没有改动你任何现有代码**。
 
 ```powershell
 # 扫描整份 PDF，列出哪些页是矢量框图
-.venv\Scripts\python backend\figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --scan
+python backend\figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --scan
 
 # 还原指定页的结构
-.venv\Scripts\python backend\figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --page 3
+python backend\figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --page 3
 ```
 
 实测产出（第 3 页系统框图，**51 个带名模块框**）：

@@ -3,7 +3,7 @@
 第 5 步（加分项）：给项目套一个网页界面（Streamlit）
 ====================================================
 运行方法（在 datasheet 目录下）：
-    .venv\\Scripts\\python -m streamlit run backend\\app.py
+    python -m streamlit run backend/scripts/streamlit_app.py
 浏览器会自动打开 http://localhost:8501，像聊天软件一样用。
 
 面试演示就用这个，比命令行有说服力得多。
@@ -12,11 +12,11 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 项目根
 
 import streamlit as st   # noqa: E402
 
-from rag_engine import RAGEngine   # noqa: E402
+from backend.app.services.rag_service import RAGEngine   # noqa: E402
 
 
 # ---------- 页面标题 ----------
@@ -33,7 +33,7 @@ def load_engine() -> RAGEngine:
 
 try:
     engine = load_engine()
-except SystemExit as e:
+except IndexNotFoundError as e:
     st.error(str(e))
     st.stop()
 

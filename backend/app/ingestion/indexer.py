@@ -10,7 +10,7 @@ P1 第 2 步：把 chunks.jsonl 灌进 FAISS 向量库（新补上的"断链"环
                                         ↑
                               原来这里断了：没有任何脚本读 chunks.jsonl
 
-  之前的 step3_vectorstore.py 直接用 PyPDFLoader 读**原始 PDF**，
+  之前的 legacy/step3_vectorstore.py 直接用 PyPDFLoader 读**原始 PDF**，
   完全不经过 P0/P1 的清洗成果。结果就是：
     - 你辛苦清洗出的表格/正文，问答链路一个字都用不到
     - vectorstore/ 里其实只有一个 4 个向量的旧库（内容还是 WB32F 示例 txt）
@@ -20,13 +20,13 @@ P1 第 2 步：把 chunks.jsonl 灌进 FAISS 向量库（新补上的"断链"环
 
 运行方法（在项目根目录 datasheet 下）：
     # 先空跑，只统计不花钱（不调 embedding 接口）
-    .venv\\Scripts\\python backend\\p1_2_index.py --dry-run
+    python -m backend.app.ingestion.indexer --dry-run
 
     # 真正建库（会调智谱 embedding 接口，把每块文字换成向量）
-    .venv\\Scripts\\python backend\\p1_2_index.py
+    python -m backend.app.ingestion.indexer
 
     # 只建某一份手册的库
-    .venv\\Scripts\\python backend\\p1_2_index.py --stem STM32F103C8_Datasheet
+    python -m backend.app.ingestion.indexer --stem STM32F103C8_Datasheet
 
 输出：
     vectorstore/index.faiss      向量索引
@@ -48,7 +48,7 @@ from langchain_core.documents import Document
 
 
 # ---------- 项目根目录 ----------
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 
 CHUNKS_ROOT = ROOT / "data" / "chunks_v2"
 STORE_DIR = ROOT / "vectorstore"
@@ -61,7 +61,7 @@ def load_chunks(chunks_root: Path, only_stem: str | None) -> tuple[list[Document
     """
     读 chunks.jsonl，转成 LangChain 的 Document 列表。
 
-    每块 JSON 的字段（chunk_loader.py 写出来的）：
+    每块 JSON 的字段（app/ingestion/chunking.py 写出来的）：
         id / type / source / title / page_start / page_end / part / n_chars / content
 
     为什么要转成 Document：
@@ -166,14 +166,14 @@ def main() -> None:
 
     if not CHUNKS_ROOT.exists():
         print(f"[错误] 找不到 {CHUNKS_ROOT.relative_to(ROOT)}")
-        print("       请先运行：.venv\\Scripts\\python backend\\chunk_loader.py")
+        print("       请先运行：python -m backend.app.ingestion.chunking")
         return
 
     print("① 读取切块结果")
     docs, stats = load_chunks(CHUNKS_ROOT, args.stem)
 
     if not docs:
-        print("\n[错误] 一块都没读到。请确认 chunk_loader.py 已经跑过，"
+        print("\n[错误] 一块都没读到。请确认 app/ingestion/chunking.py 已经跑过，"
               "且 data/chunks_v2/<手册名>/chunks.jsonl 不为空。")
         return
 
@@ -247,7 +247,7 @@ def main() -> None:
         "total_chars": total_chars,
         "sources": by_source,
         "chunks_root": str(CHUNKS_ROOT.relative_to(ROOT)),
-        "built_by": "backend/p1_2_index.py",
+        "built_by": "-m backend.app.ingestion.indexer",
     }
     (STORE_DIR / "_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -262,7 +262,7 @@ def main() -> None:
     print(f"  建库清单 : {STORE_DIR.relative_to(ROOT)}/_manifest.json")
     print()
     print("  下一步可以问问题了：")
-    print("    .venv\\Scripts\\python backend\\step4_rag.py")
+    print("    python -m backend.scripts.chat")
 
 
 if __name__ == "__main__":

@@ -4,11 +4,11 @@ P1 第 1 步：把 P0 的清洗产物切成检索用的小块（新线路的唯�
 ====================================================================
 
 输入：
-    data/text_v2/<pdf_stem>/page_*.md     正文页（p0_2_extract_text.py 产出）
-    data/tables_v5/<pdf_stem>/page_*.md   表格页（p0_1_extract_tables.py 产出）
+    data/text_v2/<pdf_stem>/page_*.md     正文页（app/ingestion/text.py 产出）
+    data/tables_v5/<pdf_stem>/page_*.md   表格页（app/ingestion/tables.py 产出）
 
 输出：
-    data/chunks_v2/<pdf_stem>/chunks.jsonl   每行一个 JSON，供 p1_2_index.py 入库
+    data/chunks_v2/<pdf_stem>/chunks.jsonl   每行一个 JSON，供 app/ingestion/indexer.py 入库
     data/chunks_v2/<pdf_stem>/_report.md     人读的统计报告，便于审计
 
 ────────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ from pathlib import Path
 
 
 # ---------- 项目根目录 ----------
-ROOT = Path(__file__).resolve().parents[1]
+from backend.app.config import ROOT
 
 
 # ==================================================================
@@ -503,8 +503,8 @@ def main() -> None:
         print(f"       {to_rel(text_dir)}  {'(存在)' if text_dir.exists() else '(缺失)'}")
         print(f"       {to_rel(table_dir)}  {'(存在)' if table_dir.exists() else '(缺失)'}")
         print("       请先运行：")
-        print("         .venv\\Scripts\\python backend\\p0_1_extract_tables.py")
-        print("         .venv\\Scripts\\python backend\\p0_2_extract_text.py")
+        print("         python -m backend.app.ingestion.tables")
+        print("         python -m backend.app.ingestion.text")
         return
 
     if args.out:

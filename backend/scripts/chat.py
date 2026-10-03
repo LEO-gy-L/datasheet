@@ -4,7 +4,7 @@
 ======================================
 流程：用户提问 → 向量库检索 → 拼 prompt → 发给 DeepSeek → 打印答案和出处
 运行方法：
-    .venv\Scripts\python backend\main.py
+    python -m backend.scripts.chat
 然后直接输入问题，比如：GPIO 最大输出电流是多少？
 输入 quit 退出。
 """
@@ -12,10 +12,10 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-# 将 src 目录加入到 sys.path 中，这样就可以直接 import rag_engine 了
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # 项目根
+# 把项目根加入 sys.path，这样才能 import 到 backend 包
 
-from rag_engine import RAGEngine   # noqa: E402
+from backend.app.services.rag_service import RAGEngine   # noqa: E402
 
 
 def print_answer(result: dict, question: str) -> None:
@@ -34,8 +34,9 @@ def print_answer(result: dict, question: str) -> None:
 if __name__ == "__main__":
     try:
         engine = RAGEngine()
-    except SystemExit as e:
-        raise e
+    except IndexNotFoundError as e:
+        print(f"\n[启动失败] {e}\n")
+        raise SystemExit(1) from None
 
     print("Datasheet 问答系统已启动，输入问题开始提问，输入 quit 退出")
     while True:
