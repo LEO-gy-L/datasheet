@@ -3,7 +3,7 @@
 第 5 步（加分项）：给项目套一个网页界面（Streamlit）
 ====================================================
 运行方法（在 datasheet 目录下）：
-    .venv\\Scripts\\python -m streamlit run src\\app.py
+    .venv\\Scripts\\python -m streamlit run backend\\app.py
 浏览器会自动打开 http://localhost:8501，像聊天软件一样用。
 
 面试演示就用这个，比命令行有说服力得多。

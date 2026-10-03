@@ -3,7 +3,7 @@
 验证 DeepSeek 能调通
 ================================
 运行方法（在 datasheet-rag 目录下）：
-    .venv\\Scripts\\python src\\llm.py
+    .venv\\Scripts\\python backend\\llm.py
 """
 import os
 from dotenv import load_dotenv          # 负责读取 .env 文件里的密钥

@@ -12,7 +12,7 @@ P0 全量质量扫描脚本
   D. 残留 Markdown 标记（** / ~~）
   E. 相邻格内容完全相同的可疑行（可能是合并填充留下的痕迹）
 
-运行： .venv\\Scripts\\python src\\p0_scan_quality.py
+运行： .venv\\Scripts\\python backend\\p0_scan_quality.py
 """
 
 import re
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pymupdf
 
-# 项目根目录：本文件在 <项目根>/src/ 下，parents[1] = 项目根
+# 项目根目录：本文件在 <项目根>/backend/ 下，parents[1] = 项目根
 ROOT = Path(__file__).resolve().parents[1]
 PDF = ROOT / "datasheets" / "STM32F103C8_Datasheet.pdf"
 
@@ -127,7 +127,7 @@ def main():
     print("=" * 68)
 
     if not out.exists():
-        print("  （目录不存在，请先跑 src/p0_1_extract_tables.py）")
+        print("  （目录不存在，请先跑 backend/p0_1_extract_tables.py）")
         return
 
     # 注意用 ** 递归：产物实际在 data/tables_v5/<手册名>/page_XXX.md 里，

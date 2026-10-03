@@ -9,7 +9,7 @@
     用来判断命中率低到底是"切块问题"还是"跨语言语义鸿沟"。
 
 运行方法（在项目根目录）：
-    .venv\Scripts\python src\diag_crosslingual.py
+    .venv\Scripts\python backend\diag_crosslingual.py
 """
 
 import sys

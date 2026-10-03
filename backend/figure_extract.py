@@ -19,8 +19,8 @@
 
 用法
 ----
-    python src/figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --page 3
-    python src/figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --scan
+    python backend/figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --page 3
+    python backend/figure_extract.py --pdf datasheets/CH32F103_Datasheet_CN.pdf --scan
 """
 
 from __future__ import annotations

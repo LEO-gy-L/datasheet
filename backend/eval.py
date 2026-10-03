@@ -13,9 +13,9 @@
     expected_source_pages    : 期望答案来自哪些页
 
 运行方法（在 datasheet 项目根目录下）：
-    .venv\\Scripts\\python src\\eval.py
-    .venv\\Scripts\\python src\\eval.py --k 6
-    .venv\\Scripts\\python src\\eval.py --source STM32F103C8_Datasheet.pdf
+    .venv\\Scripts\\python backend\\eval.py
+    .venv\\Scripts\\python backend\\eval.py --k 6
+    .venv\\Scripts\\python backend\\eval.py --source STM32F103C8_Datasheet.pdf
 
 注意：这一步会真正调用 embedding + DeepSeek 接口，会产生少量费用（几分钱）。
 """
@@ -152,7 +152,7 @@ def main() -> None:
         print(f"  平均耗时   : {statistics.mean(times):.2f} 秒")
     print()
     print("  提示：检索命中率低 -> 调大 --k 或改切块参数；")
-    print("        检索命中但答案不含关键词 -> 改 src/rag_engine.py 里的 PROMPT_TEMPLATE。")
+    print("        检索命中但答案不含关键词 -> 改 backend/rag_engine.py 里的 PROMPT_TEMPLATE。")
 
 
 if __name__ == "__main__":

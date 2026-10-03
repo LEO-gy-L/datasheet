@@ -25,7 +25,7 @@ from langchain_deepseek import ChatDeepSeek
 
 
 # ---------- 路径（沿用你项目里已验证的写法） ----------
-# 本文件在 <项目根>/src/ 下：parents[0] = src，parents[1] = 项目根
+# 本文件在 <项目根>/backend/ 下：parents[0] = src，parents[1] = 项目根
 ROOT = Path(__file__).resolve().parents[1]
 STORE_DIR = ROOT / "vectorstore"
 
@@ -69,7 +69,7 @@ class RAGEngine:
         """
         if not (store_dir / "index.faiss").exists():
             raise SystemExit(
-                "没找到向量库，请先运行：.venv\Scripts\python src\p1_2_index.py"
+                "没找到向量库，请先运行：.venv\Scripts\python backend\p1_2_index.py"
             )
 
         self.k = k

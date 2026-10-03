@@ -17,13 +17,13 @@ datasheet/
 │   ├── text_v2/<手册名>/      ← 清洗后的正文（p0_2_extract_text.py 产出）
 │   └── chunks_v2/<手册名>/    ← 切块结果 chunks.jsonl（chunk_loader.py 产出）
 ├── vectorstore/               ← 向量库（p1_2_index.py 产出；含 _manifest.json 建库清单）
-├── src/                       ← 全部 Python 代码（见下表）
+├── backend/                       ← 全部 Python 代码（见下表）
 ├── index.html + css/ + js/    ← 前端网页（前后端分离）
 ├── start_backend.bat          ← 双击启动后端服务
 └── _backup_before_fix_20260929/ ← 2026-09-29 大修前的源码与产物备份，确认没问题后可删
 ```
 
-### src/ 里每个文件干什么
+### backend/ 里每个文件干什么
 
 | 文件 | 作用 | 读 | 写 |
 |---|---|---|---|
@@ -38,9 +38,9 @@ datasheet/
 | `llm.py` | 只验证 DeepSeek 能调通 | — | 只打印 |
 | `p0_compare_pdfplumber.py` | 选型实验：pdfplumber vs PyMuPDF | `datasheets/*.pdf` | 只打印 |
 | `p0_scan_quality.py` | 全量质量体检：合并单元格、残留占位列、脏标记 | `datasheets/*.pdf` + `data/tables_v5` | 只打印 |
-| `src/legacy/` | **已废弃的旧线路脚本**，只留作对比证据，不要运行 | — | — |
+| `backend/legacy/` | **已废弃的旧线路脚本**，只留作对比证据，不要运行 | — | — |
 
-> 关于 `src/legacy/`：里面是 `p0_1_tables_v3.py`、`p0_2_filter_tables.py`、`p0_3_text.py`、
+> 关于 `backend/legacy/`：里面是 `p0_1_tables_v3.py`、`p0_2_filter_tables.py`、`p0_3_text.py`、
 > `p1_1_chunk.py`、`load_split.py`。旧线路产物是 `data/tables_v3`、`tables_v4`、`text_v1`、`chunks`。
 > `load_split.py:75` 的正则写错（`$$来源$$` 应为 `\[来源\]`）导致表格块全丢，已被 `chunk_loader.py` 取代。
 
@@ -64,26 +64,26 @@ python -m venv .venv
 
 ```bash
 # 第0步：验证模型能通（看到回复+token用量即成功）
-.venv\Scripts\python src\llm.py
+.venv\Scripts\python backend\llm.py
 
 # 第1步：表格 —— 提取 + 清洗 + 过滤伪表
-.venv\Scripts\python src\p0_1_extract_tables.py
+.venv\Scripts\python backend\p0_1_extract_tables.py
 
 # 第2步：正文 —— 提取 + 清洗
-.venv\Scripts\python src\p0_2_extract_text.py
+.venv\Scripts\python backend\p0_2_extract_text.py
 
 # 第3步：切块 —— 正文按小节切、表格跨页合并后拆片
-.venv\Scripts\python src\chunk_loader.py
+.venv\Scripts\python backend\chunk_loader.py
 
 # 第4步：建向量库（先 --dry-run 空跑看看会装什么，不调接口不花钱）
-.venv\Scripts\python src\p1_2_index.py --dry-run
-.venv\Scripts\python src\p1_2_index.py
+.venv\Scripts\python backend\p1_2_index.py --dry-run
+.venv\Scripts\python backend\p1_2_index.py
 
 # 第5步：开始问答！试试这些问题：
 #   "GPIO 最大输出电流是多少？"
 #   "VDD - VSS 之间允许的最大电压是多少？"
 #   "这个芯片有几个定时器？"
-.venv\Scripts\python src\step4_rag.py
+.venv\Scripts\python backend\step4_rag.py
 ```
 
 **重要**：换了数据手册（改了 `datasheets/` 里的文件）之后，上面第 1~4 步必须整体重跑一遍，
@@ -98,7 +98,7 @@ python -m venv .venv
 2. 打开 `index.html` → 浏览器打开聊天界面，右上角显示"后端已连接"即可提问
 3. 用完关掉黑窗口即停止服务
 
-> 架构说明：`src/api.py` 是后端（Python 干活），`index.html` 是前端（负责好看），
+> 架构说明：`backend/api.py` 是后端（Python 干活），`index.html` 是前端（负责好看），
 > 两者通过 HTTP 通信。这就是工业界的"前后端分离"，也是简历上能写的一条。
 
 ## 换成真实数据手册

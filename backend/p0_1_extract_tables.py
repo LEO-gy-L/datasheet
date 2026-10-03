@@ -20,7 +20,7 @@ P0 第 1 步：提取 + 清洗 + 过滤表格（新线路的唯一表格脚本�
     旧版这个脚本只会替换 7 个特殊字符，其余统统不管，
     所以输出里残留 <br> 标签、Col6/Col7 占位列、** 粗体记号、
     粘连单词（VDDAand / VDDpower），这些脏东西一路进了向量库。
-    现在把旧线路（src/legacy/p0_1_tables_v3.py）里成熟的清洗函数
+    现在把旧线路（backend/legacy/p0_1_tables_v3.py）里成熟的清洗函数
     全部搬了进来，按固定顺序执行：
         strip_markup          去掉 <br> / ** / _ / ~~
         normalize_dashes      7 种"假横线"统一成 ASCII 的 -

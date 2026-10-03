@@ -17,11 +17,11 @@
   这个文件保留下来只做一件事：把旧命令转接过去，让你原来的习惯不失效。
 
 运行方法（两种都可以，效果完全一样）：
-    .venv\\Scripts\\python src\\p1_2_index.py
-    .venv\\Scripts\\python src\\step3_vectorstore.py
+    .venv\\Scripts\\python backend\\p1_2_index.py
+    .venv\\Scripts\\python backend\\step3_vectorstore.py
 
 想先空跑看看库里会装什么（不调接口、不花钱）：
-    .venv\\Scripts\\python src\\p1_2_index.py --dry-run
+    .venv\\Scripts\\python backend\\p1_2_index.py --dry-run
 """
 
 import sys
@@ -34,7 +34,7 @@ from p1_2_index import main as build_index   # noqa: E402
 
 
 if __name__ == "__main__":
-    print("[提示] 建库逻辑已移到 src/p1_2_index.py，"
+    print("[提示] 建库逻辑已移到 backend/p1_2_index.py，"
           "本脚本自动转接过去（数据源：data/chunks_v2/**/chunks.jsonl）")
     print()
     build_index()

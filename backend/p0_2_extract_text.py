@@ -48,7 +48,7 @@ except ImportError:
 
 
 # ---------- 项目根目录 ----------
-# 本文件在 <项目根>/src/ 下，parents[0] = src，parents[1] = 项目根。
+# 本文件在 <项目根>/backend/ 下，parents[0] = src，parents[1] = 项目根。
 # 用绝对路径的好处：不管你在 C:\ 还是项目根敲命令，读写的位置都对。
 ROOT = Path(__file__).resolve().parents[1]
 

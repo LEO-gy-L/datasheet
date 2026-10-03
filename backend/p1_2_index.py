@@ -20,13 +20,13 @@ P1 第 2 步：把 chunks.jsonl 灌进 FAISS 向量库（新补上的"断链"环
 
 运行方法（在项目根目录 datasheet 下）：
     # 先空跑，只统计不花钱（不调 embedding 接口）
-    .venv\\Scripts\\python src\\p1_2_index.py --dry-run
+    .venv\\Scripts\\python backend\\p1_2_index.py --dry-run
 
     # 真正建库（会调智谱 embedding 接口，把每块文字换成向量）
-    .venv\\Scripts\\python src\\p1_2_index.py
+    .venv\\Scripts\\python backend\\p1_2_index.py
 
     # 只建某一份手册的库
-    .venv\\Scripts\\python src\\p1_2_index.py --stem STM32F103C8_Datasheet
+    .venv\\Scripts\\python backend\\p1_2_index.py --stem STM32F103C8_Datasheet
 
 输出：
     vectorstore/index.faiss      向量索引
@@ -166,7 +166,7 @@ def main() -> None:
 
     if not CHUNKS_ROOT.exists():
         print(f"[错误] 找不到 {CHUNKS_ROOT.relative_to(ROOT)}")
-        print("       请先运行：.venv\\Scripts\\python src\\chunk_loader.py")
+        print("       请先运行：.venv\\Scripts\\python backend\\chunk_loader.py")
         return
 
     print("① 读取切块结果")
@@ -247,7 +247,7 @@ def main() -> None:
         "total_chars": total_chars,
         "sources": by_source,
         "chunks_root": str(CHUNKS_ROOT.relative_to(ROOT)),
-        "built_by": "src/p1_2_index.py",
+        "built_by": "backend/p1_2_index.py",
     }
     (STORE_DIR / "_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -262,7 +262,7 @@ def main() -> None:
     print(f"  建库清单 : {STORE_DIR.relative_to(ROOT)}/_manifest.json")
     print()
     print("  下一步可以问问题了：")
-    print("    .venv\\Scripts\\python src\\step4_rag.py")
+    print("    .venv\\Scripts\\python backend\\step4_rag.py")
 
 
 if __name__ == "__main__":

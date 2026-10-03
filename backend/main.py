@@ -4,7 +4,7 @@
 ======================================
 流程：用户提问 → 向量库检索 → 拼 prompt → 发给 DeepSeek → 打印答案和出处
 运行方法：
-    .venv\Scripts\python src\main.py
+    .venv\Scripts\python backend\main.py
 然后直接输入问题，比如：GPIO 最大输出电流是多少？
 输入 quit 退出。
 """

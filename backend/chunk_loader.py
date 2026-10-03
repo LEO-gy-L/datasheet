@@ -14,7 +14,7 @@ P1 第 1 步：把 P0 的清洗产物切成检索用的小块（新线路的唯�
 ────────────────────────────────────────────────────────────────
 2026-09-29 说明：这个脚本原来是"哑切块"，现在升级成和旧线路同等质量
 ────────────────────────────────────────────────────────────────
-旧线路（src/legacy/p1_1_chunk.py）切块切得好，但读的是旧目录；
+旧线路（backend/legacy/p1_1_chunk.py）切块切得好，但读的是旧目录；
 新线路（本脚本）原来只是把正文按 400 字粗暴切断，缺三样东西：
 
   1. 【上下文前缀】旧线路每块开头会贴一句
@@ -27,7 +27,7 @@ P1 第 1 步：把 P0 的清洗产物切成检索用的小块（新线路的唯�
      不拼回来，"PB10 引脚"只能检索到一页的碎片；
      超长的表按行拆，但每一片都重复贴表头，否则只有数据没有列名。
 
-这三样现在全部搬进来了。旧线路的脚本已归档到 src/legacy/。
+这三样现在全部搬进来了。旧线路的脚本已归档到 backend/legacy/。
 """
 
 import argparse
@@ -503,8 +503,8 @@ def main() -> None:
         print(f"       {to_rel(text_dir)}  {'(存在)' if text_dir.exists() else '(缺失)'}")
         print(f"       {to_rel(table_dir)}  {'(存在)' if table_dir.exists() else '(缺失)'}")
         print("       请先运行：")
-        print("         .venv\\Scripts\\python src\\p0_1_extract_tables.py")
-        print("         .venv\\Scripts\\python src\\p0_2_extract_text.py")
+        print("         .venv\\Scripts\\python backend\\p0_1_extract_tables.py")
+        print("         .venv\\Scripts\\python backend\\p0_2_extract_text.py")
         return
 
     if args.out:
