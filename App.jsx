@@ -1,9 +1,16 @@
-const API = window.API_URL || "http://127.0.0.1:8000";
-import { useState,useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { marked } from "marked";
+import { animateIntro, animateRowIn } from "./js/animation.js";
+import DOMPurify from "dompurify";
 
+const API = window.API_URL || "http://127.0.0.1:8000";
+function toHtml(text) {
+  return { __html: DOMPurify.sanitize(marked.parse(text)) };
+}
 export default function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const chatRef = useRef(null);
 
     const [backend, setBackend] = useState("checking");
 
@@ -21,6 +28,17 @@ export default function App() {
     const timer = setInterval(check, 8000);
     return () => clearInterval(timer);
   }, []);
+
+  useLayoutEffect(() => {
+    animateIntro();
+  }, []);
+
+  useLayoutEffect(() => {
+    const rows = chatRef.current?.querySelectorAll(".row");
+    if (rows && rows.length) {
+      animateRowIn(rows[rows.length - 1]);
+    }
+  }, [messages]);
 
   const dotClass = "dot " + (backend === "ok" ? "ok" : backend === "bad" ? "bad" : "");
   const statusWord = backend === "ok" ? "后端已连接" : backend === "bad" ? "后端未启动" : "检测后端中…";
@@ -65,7 +83,7 @@ export default function App() {
       </div>
 
       <div className="card">
-        <div className="chat" id="chat">
+        <div className="chat" id="chat" ref={chatRef}>
           {messages.length === 0 ? (
             <div className="hello" id="hello">
               <div className="hi">👋 你好，我是数据手册助手</div>
@@ -80,7 +98,9 @@ export default function App() {
             messages.map((msg, i) => (
               <div key={i} className={"row " + msg.who}>
                 <div className="avatar">{msg.who === "user" ? "我" : "AI"}</div>
-                <div className="bubble">{msg.text}</div>
+                {msg.who === "ai"
+                  ? <div className="bubble" dangerouslySetInnerHTML={toHtml(msg.text)} />
+                  : <div className="bubble">{msg.text}</div>}
               </div>
             ))
           )}

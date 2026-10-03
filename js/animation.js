@@ -12,7 +12,8 @@ const HAS_ANIME = typeof animate !== "undefined";
 /* 注意：这里是 .card（class），不是 #card。
    HTML 里写的是 <div class="card">，根本没有 id="card"，
    选择器写错的话这个卡片就永远等不到入场动画。 */
-if (HAS_ANIME) {
+export function animateIntro() {
+  if (!HAS_ANIME) return;
   const intro = createTimeline();
   intro
     .add(".topbar", { opacity: [0, 1], translateY: [-12, 0], duration: 600, ease: "outQuad" })

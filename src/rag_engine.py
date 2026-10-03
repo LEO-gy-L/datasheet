@@ -3,7 +3,7 @@
 RAG 引擎（把重复三遍的逻辑合并到这里）
 =======================================
 为什么要有这个文件：
-    原来 step4_rag.py / api.py / app.py 里各有一份几乎一样的：
+    原来 main.py / api.py / app.py 里各有一份几乎一样的：
         similarity_search -> 拼 prompt -> model.invoke -> 整理出处
     改一次 prompt 要改三个文件，容易漏。现在只改这里。
 
@@ -37,12 +37,12 @@ load_dotenv(ROOT / ".env")
 # ---------- 可调参数 ----------
 EMBED_MODEL = "embedding-3"    # 必须和建库时一致，换了会检索不到
 LLM_MODEL = "deepseek-chat"
-DEFAULT_K = 4                  # 默认检索块数，保持你原来的行为
+DEFAULT_K = 10                 # 默认检索块数，保持你原来的行为
 
 
 # ---------- Prompt 模板（以后改口径只改这里） ----------
 PROMPT_TEMPLATE = """你是一个芯片数据手册问答助手。请只根据下面提供的资料回答问题。
-如果资料里没有答案，就直接说"数据手册中没有提到"，不要自己编。
+如果资料里没有答案，就直接说"数据手册中没有提到"，然后自己在网上搜素答案，寻找准确的答案，如果是正常聊天，就正常回复。
 
 【资料】
 {context}
@@ -69,7 +69,7 @@ class RAGEngine:
         """
         if not (store_dir / "index.faiss").exists():
             raise SystemExit(
-                "没找到向量库，请先运行：.venv\\Scripts\\python src\\p1_2_index.py"
+                "没找到向量库，请先运行：.venv\Scripts\python src\p1_2_index.py"
             )
 
         self.k = k

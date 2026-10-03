@@ -1,26 +1,31 @@
 [
   {
     "question": "STM32F103C8 的最高主频是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
     "expected_answer_contains": ["72 MHz", "72MHz"],
     "expected_source_pages": [1]
   },
   {
     "question": "STM32F103 用的是什么内核？",
+    "source": "STM32F103C8_Datasheet.pdf",
     "expected_answer_contains": ["Cortex-M3", "Cortex M3"],
     "expected_source_pages": [1]
   },
   {
     "question": "Flash 存储器容量是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
     "expected_answer_contains": ["128 Kbytes", "128 KB", "64 or 128 Kbytes"],
     "expected_source_pages": [1]
   },
   {
     "question": "SRAM 有多大？",
+    "source": "STM32F103C8_Datasheet.pdf",
     "expected_answer_contains": ["20 Kbytes", "20 KB"],
     "expected_source_pages": [1]
   },
   {
     "question": "供电电压范围是多少？",
+    "source": "STM32F103C8_Datasheet.pdf",
     "expected_answer_contains": ["2.0 to 3.6 V", "2.0-3.6V", "2.0 ~ 3.6"],
     "expected_source_pages": [1]
   }

@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-第 4 步：完整的 RAG 问答（命令行版）
+入口函数，负责读输入和打印
 ======================================
 流程：用户提问 → 向量库检索 → 拼 prompt → 发给 DeepSeek → 打印答案和出处
-
-RAG 的全部逻辑已经搬到 src/rag_engine.py，这里只负责"读输入 + 打印"。
-
 运行方法：
-    .venv\\Scripts\\python src\\step4_rag.py
+    .venv\Scripts\python src\main.py
 然后直接输入问题，比如：GPIO 最大输出电流是多少？
 输入 quit 退出。
 """
@@ -16,6 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# 将 src 目录加入到 sys.path 中，这样就可以直接 import rag_engine 了
 
 from rag_engine import RAGEngine   # noqa: E402
 

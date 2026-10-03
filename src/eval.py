@@ -41,6 +41,11 @@ def load_pairs(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _normalize(text: str) -> str:
+    """去掉商标符号，避免 Cortex®-M3 匹配不上 Cortex-M3。"""
+    return text.lower().replace("\u00ae", "").replace("\u2122", "")
+
+
 def check_keywords(answer: str, keywords: list[str]) -> tuple[bool, str | None]:
     """
     关键词检查：任意一个出现就算命中（ANY 语义）。
@@ -51,9 +56,9 @@ def check_keywords(answer: str, keywords: list[str]) -> tuple[bool, str | None]:
     """
     if not keywords:
         return True, None
-    low = answer.lower()
+    low = _normalize(answer)
     for kw in keywords:
-        if kw.lower() in low:
+        if _normalize(kw) in low:
             return True, kw
     return False, None
 
@@ -103,8 +108,9 @@ def main() -> None:
 
     for item in pairs:
         q = item["question"]
+        source = item.get("source") or args.source
         try:
-            res = engine.ask(q, source=args.source)
+            res = engine.ask(q, source=source)
         except Exception as e:
             print(f"\n[失败] {q}")
             print(f"       原因：{e}")
