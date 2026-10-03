@@ -1,0 +1,144 @@
+/* ============================================================================
+   global.css —— 全站基础样式
+   ============================================================================
+   职责边界（很重要，别把东西放错地方）：
+     · 组件长什么样（颜色/圆角/间距）-> 全在 src/theme.js 的 antd 主题里
+     · 页面底色、字体、滚动条这些"框架级"的 -> 在这个文件里
+     · datasheet 助理页那一整套手写界面 -> assets/css/assistant.css（独立作用域）
+
+   视觉规范：**极简高级灰**
+     没有彩色。强调色 = 近黑 #18181B。靠 1px 细线和三级灰阶拉层次，
+     而不是靠阴影和色块。色板取自 zinc 灰阶（比纯灰多一丝冷调）。
+   ============================================================================ */
+
+:root {
+  /* ---------------------------------------------------- ① 灰阶色板（原料） */
+  /* 命名跟 Tailwind 的 zinc 对齐，方便你以后查资料时对得上号。
+     写页面样式时**不要**直接用这些，用下面第二段的语义变量 ——
+     这样以后整体调亮调暗，只改语义变量那一处。
+     只留真正被用到的档位：删掉过 --c-500 / --c-800 / --c-950，
+     它们从头到尾没被任何一条样式引用过。 */
+  --c-50: #fafafa;
+  --c-100: #f4f4f5;
+  --c-200: #e4e4e7;
+  --c-300: #d4d4d8;
+  --c-400: #a1a1aa;
+  --c-600: #52525b;
+  --c-700: #3f3f46;
+  --c-900: #18181b;
+
+  /* -------------------------------------------------- ② 语义变量（实际用） */
+  --bg-page: var(--c-50);        /* 内容区底色 */
+  --bg-surface: #ffffff;         /* 卡片 / 顶栏 / 侧栏 */
+  --bg-subtle: var(--c-100);     /* 浅凹槽：表头、输入框、tag */
+  --line: var(--c-200);          /* 主边框 */
+  --ink: var(--c-900);           /* 主文字 */
+  --ink-soft: var(--c-600);      /* 次要文字 */
+  --ink-faint: var(--c-400);     /* 辅助文字 / 占位符 */
+
+  /* 等宽字体栈：给代码、型号（CH32F103C6T6）、数字用 */
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg-page);
+  color: var(--ink);
+  /* 字体渲染：Mac 上关掉亚像素抗锯齿，字会显得更"薄"更精致；
+     这是所有走 Apple 风的界面都会加的一行。 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* 等宽数字：表格里的时间、页码、块数会纵向对齐，不会忽宽忽窄。
+     只影响数字字形，中文不受影响。 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* 选中文字：默认是浏览器蓝，灰阶系统里改成中性灰 */
+::selection {
+  background: var(--c-200);
+  color: var(--c-900);
+}
+
+/* ------------------------------------------------------------------ 滚动条 */
+/* 默认滚动条在 Windows 上是一条很宽的灰槽，非常破坏"轻盈感"。
+   这里的做法：thumb 加 2px 透明边框 + background-clip，
+   视觉上变细，但点击热区还是原来的宽度（好用又好看）。 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-300);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-400);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ------------------------------------------------- antd 的零星覆盖（仅两处） */
+/* 为什么只有两处需要覆盖：其余全在 main.jsx 的主题里搞定了。
+   这两处是 antd 用"局部写死的红色"，拿不到 token，只能从 CSS 压回去。 */
+
+/* 表格表头：比正文小半号 + 字重 500 + 一点字距。
+   antd 默认表头跟正文同为 14px、字重一样，视觉上"压不住"数据行；
+   调小反而更精致，也把注意力让给数据本身。
+   用 !important 是因为 antd 的样式由 CSS-in-JS 生成，优先级更高。 */
+.ant-table-thead > tr > th {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px;
+}
+
+/* 顶栏右上角那个头像触发器（components/AccountMenu.jsx）。
+   它是个内联样式的 div，:hover 没法写在内联里，所以单独放这儿。 */
+.account-trigger {
+  border-radius: 8px;
+  transition: background 0.18s;
+}
+.account-trigger:hover {
+  background: var(--bg-subtle);
+}
+
+/* 实心黑标签。灰阶系统里没法用"蓝色"标管理员，改用**实心/空心**对比：
+   实心黑 = 高权限（管理员），普通灰底 = 一般角色。
+   为什么写成 .tag-solid.ant-tag 而不是 .tag-solid：antd 的 tag 样式是
+   CSS-in-JS 生成的，优先级比单个 class 高，叠加一层才会赢。 */
+.tag-solid.ant-tag {
+  background: var(--ink);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* <Text code> 默认是浅红底红字。灰阶系统里改成中性灰 —— 
+   芯片型号（CH32F103C6T6）会大量用到这个标签，一片红太吵。 */
+.ant-typography code {
+  background: var(--c-100) !important;
+  border: 1px solid var(--line);
+  color: var(--c-700) !important;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 1px 6px;
+  border-radius: 5px;
+}

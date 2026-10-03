@@ -52,6 +52,9 @@ except ImportError:
 # 用绝对路径的好处：不管你在 C:\ 还是项目根敲命令，读写的位置都对。
 from backend.app.config import ROOT
 
+# 中文清洗：段落合并时"中文之间不插空格"、删汉字间的多余空格
+from backend.app.ingestion.cn_clean import merge_wrapped_lines, strip_spaces_between_han
+
 
 # ---------- 配置 ----------
 # 页眉/页脚：靠"在页面边缘反复出现"来识别
@@ -98,6 +101,10 @@ def clean_chars(text: str) -> str:
         text = text.replace(old, new)
     # 连续 2 个以上空格压成 1 个（PDF 排版常有连续空格）
     text = re.sub(r"[ \t]{2,}", " ", text)
+    # 汉字之间的空格直接删掉（"定 时 器" -> "定时器"）。
+    # 只动汉字两侧，绝不碰 "CH32F103 C6T6" 这种字母数字之间的空格。
+    # (2026-10-03 新增：中文手册实测有这类排版空格，会直接毁掉检索匹配)
+    text = strip_spaces_between_han(text)
     return text
 
 
@@ -110,27 +117,28 @@ def merge_lines(text: str) -> str:
         page.get_text("blocks") 出来就是 3 行文本。
         下游切块是按空行切的，不合并的话一句话可能被拆到两个块里。
 
-    规则：默认把下一行接到上一行后面（用空格连接）；
+    规则：默认把下一行接到上一行后面；
          遇到以 "-" "•" "1." 开头的行，认为是新的一段，保留换行。
          上一行以连字符结尾时，说明单词被折断了（"charact-" + "eristic"），
          直接拼起来、不留空格。
-    """
-    lines = [ln.strip() for ln in text.split("\n")]
-    lines = [ln for ln in lines if ln]
-    if not lines:
-        return ""
 
-    out: list[str] = [lines[0]]
-    for ln in lines[1:]:
-        if NEW_ITEM_RE.match(ln):
-            out.append("\n" + ln)               # 新的列表项，保留换行
-        else:
-            prev = out[-1]
-            if prev.endswith("-") and not prev.endswith(" -"):
-                out[-1] = prev[:-1] + ln        # 单词被折断，拼回去
-            else:
-                out[-1] = prev + " " + ln
-    return "".join(out)
+    ────────────────────────────────────────────────────────────
+    2026-10-03 修复 4：拼接逻辑搬到了 cn_clean.merge_wrapped_lines()
+    ────────────────────────────────────────────────────────────
+    原来这里是 `out[-1] = prev + " " + ln` —— **对中文是致命的**：
+
+        中文不需要空格分词，这一行会把竖排/折行的汉字之间塞上空格。
+        实测 CH32F103 手册有 168 处汉字被换行断开，
+        经过旧逻辑后 "可编程电" + "器(PVD)" 变成 "可编程电 器(PVD)"，
+        竖排表头 "定/时/器" 变成 "定 时 器"，
+        于是检索"定时器""可编程电器"永远匹配不上 ——
+        库里存的就是带空格的那一版。
+
+    现在交给 cn_clean.smart_join()：**两端都是中文就直接连，不插空格**；
+    其他情况（英文单词之间）保持加空格。
+    连字符折行的逻辑也一并搬过去了，行为完全一致。
+    """
+    return merge_wrapped_lines(text, new_item_re=NEW_ITEM_RE)
 
 
 def looks_like_figure_label(text: str) -> bool:

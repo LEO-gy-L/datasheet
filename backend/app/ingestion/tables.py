@@ -56,9 +56,30 @@ except ImportError:
 # ---------- 项目根目录 ----------
 from backend.app.config import ROOT
 
+# ---------- 表格结构重建（按坐标）----------
+# 为什么必须用它：中文手册的 find_tables() 会把双线边框算成独立列
+# （表1-1 实测被认成 22 行 × 14 列，真实只有 5 列），
+# 而且表头行和数据的列边界根本不是同一套坐标，to_markdown() 直接报废。
+# 完整证据见 backend/app/ingestion/table_struct.py 的文件头。
+from backend.app.ingestion.table_struct import rebuild as rebuild_table
+
+# 中文清洗：竖排单字合并（"定/时/器" -> "定时器"）、汉字间去空格
+from backend.app.ingestion.cn_clean import clean_cell_text
+
 
 # ---------- 配置 ----------
 TITLE_SEARCH_PT = 60.0       # 在表格上边框上方 60pt 内搜索标题
+
+# 表格 / 图的题注识别。必须同时认中英文两种写法：
+#     英文手册：  "Table 6. Voltage characteristics"
+#     中文手册：  "表1-1 CH32F103x 产品资源分配"    ← 实测中文这里没有空格，也完全不含 "Table"
+# 只认 "Table\s*\d+" 的话，中文手册的标题一个都认不出来，
+# 后果是每张表都被当成"无标题表"，然后走严格的伪表过滤，被大量误杀。
+# 注意中文没有词边界，所以这里不加 \b（加了反而不生效）。
+TABLE_TITLE_RE = re.compile(
+    r"(?:Table|Figure|表|图)\s*\d+(?:[-.\s]\d+)*",
+    re.IGNORECASE,
+)
 
 # 伪表过滤阈值
 DRAW_RATIO_MAX = 0.35          # 图形重叠率超过这个值 -> 伪表
@@ -163,15 +184,59 @@ def fix_sign_spacing(text: str) -> str:
     return text
 
 
+def fix_number_ranges(text: str) -> str:
+    r"""
+    把"数字 - 数字"里被空格撑开的连字符收回来：
+
+        "表1 - 1 CH32F103x 产品资源分配"  ->  "表1-1 CH32F103x 产品资源分配"
+        "40 - 85"                        ->  "40-85"
+
+    为什么需要（2026-10-03 实测）：
+        中文 PDF 把题注 "表1-1" 拆成了三个 word —— ["表1", "-", "1"]，
+        拼接时用空格连接就成了 "表1 - 1"；
+        紧接着 fix_sign_spacing 那条 `(?<=[A-Za-z0-9])-\s* -> " - "` 规则
+        **又主动把 "1-1" 改成 "1 - 1"**（那条规则本来是给
+        "VSS- 0.3" 这种数值场景写的，用在题注上是误伤）。
+        结果是表格编号认不出来、检索"表1-1"也命中不了。
+
+    只处理"数字夹数字"，所以下面几种都不会被误伤：
+        "- 0.3"        前面不是数字 -> 不动
+        "VDD - VSS"    不是数字夹数字 -> 不动
+        "2.7V～5.5V"   用的不是 ASCII 连字符 -> 不动
+    """
+    return re.sub(r"(?<=\d)\s*-\s*(?=\d)", "-", text)
+
+
 def clean_cell(text: str) -> str:
-    """按固定顺序跑一遍所有清洗规则（顺序不能乱）。"""
+    """
+    按固定顺序跑一遍所有清洗规则（顺序不能乱）。
+
+    顺序：
+        去标记 -> 统一横线 -> 统一空格 -> **中文清洗** -> 修粘连词
+        -> 修正负号 -> **收回编号连字符** -> 再统一空格
+
+    2026-10-03 新增第 4 步 cn_clean.clean_cell_text()：
+        中文手册的单元格里，竖排表头会被拆成 "定\\n时\\n器"（实测第 2 页
+        "定时器""通信接口"都是这样），汉字之间还可能被排版塞空格。
+        这一步负责把它们拼回完整的词。
+
+    2026-10-03 新增 fix_number_ranges：
+        必须放在 fix_sign_spacing **之后** —— 因为正是 fix_sign_spacing
+        把 "表1-1" 改成了 "表1 - 1"，要收回来只能在它后面收。
+
+    为什么中文清洗要放在 fix_glued_words 之前：
+        中文清洗会删掉汉字之间的空格，如果先修粘连词，删完空格
+        又可能制造出新的粘连，顺序反了会漏修一轮。
+    """
     if text is None:
         return ""
     text = strip_markup(text)
     text = normalize_dashes(text)
     text = normalize_spaces(text)
+    text = clean_cell_text(text)        # 中文：竖排单字合并 + 汉字间去空格
     text = fix_glued_words(text)
     text = fix_sign_spacing(text)
+    text = fix_number_ranges(text)      # 收回 "表1 - 1" -> "表1-1"
     text = normalize_spaces(text)
     return text
 
@@ -398,7 +463,7 @@ def extract_table_title(rows: list[list[str]]) -> tuple[str, list[list[str]]]:
     has_placeholder = any(PLACEHOLDER_RE.match(c.strip()) for c in first)
     joined = " ".join(first)
 
-    if not (has_placeholder and re.search(r"Table\s*\d+", joined)):
+    if not (has_placeholder and TABLE_TITLE_RE.search(joined)):
         return "", rows
 
     words = [c.strip() for c in first
@@ -440,7 +505,7 @@ def find_title_by_coords(page: pymupdf.Page, table) -> str:
     for ws in lines.values():
         ws.sort(key=lambda w: w[0])
         text = " ".join(w[4] for w in ws)
-        if re.search(r"Table\s*\d+", text):
+        if TABLE_TITLE_RE.search(text):
             candidates.append((max(w[3] for w in ws), text))   # (行的最大y, 文本)
 
     if not candidates:
@@ -555,16 +620,51 @@ def judge(title: str | None, f: dict) -> tuple[bool, str]:
 # 第五组：把一张表变成干净的 Markdown
 # ==================================================================
 
-def table_to_markdown(page: pymupdf.Page, table) -> tuple[str | None, str]:
+def table_to_markdown(page: pymupdf.Page, table) -> tuple[str | None, str, list[str]]:
     """
-    把 PyMuPDF 表格对象转成干净的 Markdown。返回 (标题, markdown)。
+    把 PyMuPDF 表格对象转成干净的 Markdown。
 
-    步骤顺序不能调换：
-      对齐列数 -> 算偏移 -> 补合并格 -> 逐格清洗 -> 摘标题 -> 删占位列 -> 再对齐
+    返回 (标题, markdown, 自描述句列表)。
+
+    两条路径，优先走新的坐标重建：
+
+      路径 A（默认）：table_struct.rebuild()
+          按单元格坐标重建网格。中文手册必须走这条。
+          它同时产出「自描述句」，例如：
+              CH32F103 C6T6 · 芯片引脚数 = 48
+          这是"数据不丢上下文"的关键 —— 旧输出里 `48` 是孤立的，
+          向量和 BM25 都看不出它属于哪个型号。
+
+      路径 B（兜底）：旧的 to_markdown() + 对齐 / 补合并格 / 删占位列
+          只在坐标重建失败时走（表格结构太乱、边界认不出来）。
+          英文手册实测在这条路上表现良好，保留作为安全网。
+          ⚠️ 兜底的意义不是"好看"，而是"宁可退回旧行为，
+             也不要输出一张错位的表"—— 错位的表会一本正经地给出错误数据，
+             比没有表危险得多。
+
+    路径 B 下 records 返回空列表，调用方要能接受。
     """
+    # ---------- 标题：先用坐标找（中英文题注都能认）----------
+    by_coords = clean_cell(find_title_by_coords(page, table))
+
+    # ---------- 路径 A：坐标重建 ----------
+    rebuilt = None
+    try:
+        rebuilt = rebuild_table(page, table)
+    except Exception:
+        # 重建是"尽力而为"的增强。任何意外（坐标系异常、PDF 损坏）
+        # 都不该让整份手册解析失败，所以吞掉异常、退回路径 B。
+        rebuilt = None
+
+    if rebuilt is not None and rebuilt.markdown:
+        return by_coords, rebuilt.markdown, rebuilt.records
+
+    # ---------- 路径 B：旧的 to_markdown 兜底 ----------
+    # 步骤顺序不能调换：
+    #   对齐列数 -> 算偏移 -> 补合并格 -> 逐格清洗 -> 摘标题 -> 删占位列 -> 再对齐
     raw = table.to_markdown()
     if not raw:
-        return None, ""
+        return None, "", []
 
     # 解析原始行（跳过分隔线），行首行尾的 | 去掉
     rows: list[list[str]] = []
@@ -576,7 +676,7 @@ def table_to_markdown(page: pymupdf.Page, table) -> tuple[str | None, str]:
         rows.append([c for c in line.strip().strip("|").split("|")])
 
     if not rows:
-        return None, ""
+        return None, "", []
 
     rows = align_columns(rows)
 
@@ -592,22 +692,48 @@ def table_to_markdown(page: pymupdf.Page, table) -> tuple[str | None, str]:
     rows = align_columns(rows)
 
     if not rows:
-        return None, ""
+        return None, "", []
     if len(rows) == 1:
         # 只剩表头、没有数据行 -> 不是有效表
-        return None, ""
+        return None, "", []
 
     # 坐标法找标题（上面没拿到时用它补）
     if not title:
-        title = clean_cell(find_title_by_coords(page, table))
+        title = by_coords
 
     md = build_markdown_table(rows[0], rows[1:])
-    return title, md
+    return title, md, []
 
 
 def write_table(out_dir: Path, page_no: int, pdf_name: str,
-                title: str, md: str) -> None:
-    """按统一格式输出单张表格（一页多表时追加到同一个文件）。"""
+                title: str, md: str, records: list[str] | None = None) -> None:
+    """
+    按统一格式输出单张表格（一页多表时追加到同一个文件）。
+
+    输出格式：
+
+        [来源] CH32F103_Datasheet_CN.pdf
+        [页码] 2
+        [标题] 表1-1 CH32F103x 产品资源分配
+        [类型] table
+
+        | 产品型号 / 资源差异 | CH32F103 C6T6 | ... |
+        | --- | ... |
+        | 芯片引脚数 | 48 | ... |
+
+        [数据点]
+        - CH32F103 C6T6 · 芯片引脚数 = 48
+        - CH32F103 C6T6 · 闪存（字节） = 32K
+        ...
+
+    [数据点] 段是 2026-10-03 新增的。为什么要有它：
+        markdown 表格里那个 "48" 是孤立的，向量化和 BM25 都看不出
+        它属于哪个型号；自描述句把"列头 + 行头"直接绑在数值旁边，
+        检索"CH32F103C6T6 的引脚数是多少"才可能命中正确的块。
+
+    切块脚本（app/ingestion/chunking.py）会把这段单独取出来当**索引文本**，
+    而 markdown 表格作为**展示文本** —— 两者分开，见 chunking.py 的说明。
+    """
     content = (
         f"[来源] {pdf_name}\n"
         f"[页码] {page_no}\n"
@@ -615,6 +741,9 @@ def write_table(out_dir: Path, page_no: int, pdf_name: str,
         f"[类型] table\n\n"
         f"{md}\n"
     )
+    if records:
+        content += "\n[数据点]\n" + "\n".join(f"- {r}" for r in records) + "\n"
+
     page_file = out_dir / f"page_{page_no:03d}.md"
     if page_file.exists():
         page_file.write_text(
@@ -678,7 +807,7 @@ def main() -> None:
         tables = page.find_tables().tables
         for ti, table in enumerate(tables, start=1):
             raw_md = table.to_markdown()
-            title, md = table_to_markdown(page, table)
+            title, md, records = table_to_markdown(page, table)
             draw_ratio = rect_overlap_ratio(table.bbox, drawings)
 
             if not md:
@@ -695,7 +824,7 @@ def main() -> None:
                 continue
 
             display_title = title or f"第 {pno + 1} 页 表 {ti}"
-            write_table(out_dir, pno + 1, pdf_name, display_title, md)
+            write_table(out_dir, pno + 1, pdf_name, display_title, md, records)
             kept += 1
 
     doc.close()

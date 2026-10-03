@@ -13,10 +13,13 @@
     "vite": "^8.3.1"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.4",
     "animejs": "^4.5.0",
+    "antd": "^6.6.5",
     "dompurify": "^3.4.16",
     "marked": "^18.0.14",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4"
   }
 }
