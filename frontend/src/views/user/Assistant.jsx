@@ -1,11 +1,10 @@
 import { CommentOutlined } from "@ant-design/icons";
 import { App, Form, Input, Modal, Select } from "antd";
-import DOMPurify from "dompurify";
-import { marked } from "marked";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { ask } from "@/api/chat.js";
 import { createFeedback, FEEDBACK_CATEGORIES } from "@/api/feedback.js";
+import DocPicker from "@/components/DocPicker.jsx";
 import { useAuth } from "@/context/AuthContext.jsx";
 import {
   animateIntro,
@@ -14,13 +13,11 @@ import {
   animateTyping,
 } from "@/utils/chatAnimation.js";
 import { safeValidate } from "@/utils/form.js";
+// markdown -> 安全 HTML。抽到 utils 里是因为历史问答页也要渲染同一批答案，
+// 两处各写一份的话，将来"忘了在其中一处加 DOMPurify"就是个真的 XSS 漏洞。
+import { toHtml } from "@/utils/markdown.js";
 
 import "@/assets/css/assistant.css";
-
-/** 把 markdown 转成安全 HTML。DOMPurify 必须包一层 —— 模型输出里可能出现 <script> */
-function toHtml(text) {
-  return { __html: DOMPurify.sanitize(marked.parse(text ?? "")) };
-}
 
 /** 首屏的建议问题：点一下就直接发出去 */
 const QUICK_ASKS = [
@@ -54,6 +51,10 @@ export default function Assistant() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+
+  /* 检索范围："" = 全部手册；否则是某份手册的文件名。
+     这个值会被原样传给后端的 /api/ask（见下面 send 里的 ask(q, { source })). */
+  const [scope, setScope] = useState("");
 
   // 正在被反馈的那条 AI 消息
   const [fbTarget, setFbTarget] = useState(null);
@@ -108,7 +109,11 @@ export default function Assistant() {
     setSending(true);
 
     try {
-      const data = await ask(q);
+      // source 传 undefined 时 JSON.stringify 会**整个省略这个键**，
+      // 后端 pydantic 收到的是默认值 None = 在全部手册里检索。
+      // 这就是为什么这里写 `scope || undefined` 而不是 `scope`：
+      // 传空字符串 "" 的话后端会拿它去过滤 source == ""，一轮都命不中。
+      const data = await ask(q, { source: scope || undefined });
       setMessages((prev) => [
         ...prev,
         {
@@ -135,6 +140,27 @@ export default function Assistant() {
       ]);
     } finally {
       setSending(false);
+    }
+  }
+
+  /* ---------- 切换检索范围 ---------- */
+  function changeScope(next) {
+    setScope(next);
+
+    // 换范围时清空当前对话 —— 理由见 DocPicker.jsx 文件头的说明：
+    // 旧回答是在**旧范围**下得出的，留在屏幕上和新的混在一起，
+    // 回头再看根本分不清哪句是哪个范围给的。
+    //
+    // 为什么要给一句提示而不是默默清掉：
+    //   消息突然消失是很惊悚的体验，用户会以为"我是不是点错了什么"。
+    //   说一句"已切换 + 对话已清空"，行为就可预期了。
+    if (messages.length > 0) {
+      setMessages([]);
+      message.info(
+        next ? `已限定只在《${next}》里检索，对话已清空` : "已切回全部手册，对话已清空"
+      );
+    } else {
+      message.success(next ? `已限定只在《${next}》里检索` : "已切回全部手册");
     }
   }
 
@@ -267,6 +293,19 @@ export default function Assistant() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* 检索范围选择器（"只在这份手册里提问"）。
+            放在输入栏上方的**卡片内部**，因为它修饰的是"这一个问题"的范围，
+            紧挨着输入框才有这个语义；放到页面顶栏就变成一个全局设置了。 */}
+        <div className="scopebar">
+          <DocPicker
+            value={scope}
+            onChange={changeScope}
+            // 正在等待回答时禁用：这一轮请求已经带着旧的范围发出去了，
+            // 中途换掉会让人以为"改的是这一轮"，其实不是。
+            disabled={sending}
+          />
         </div>
 
         {/* 输入栏（原 css/lab.css） */}

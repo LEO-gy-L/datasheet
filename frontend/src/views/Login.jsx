@@ -1,5 +1,5 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
-import { App, Button, Form, Input, Space } from "antd";
+import { App, Button, Form, Input } from "antd";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,11 +9,10 @@ import { homePathFor } from "@/router/guard.jsx";
 /**
  * 登录页。
  *
- * 演示账号（现在还没接后端，账号是写死的，见 src/mock/data.js）：
- *   管理员   admin / admin123
- *   普通用户 zhang / 123456
- * 页面上放了两个"一键填充"按钮，省得每次手敲。
- * 接后端之后这两个按钮可以直接删掉。
+ * 账号由后端校验（POST /api/auth/login）。默认管理员是 admin / admin123 ——
+ * 首次启动时后端自动创建，见 backend/app/services/user_service.py 的 seed_admin()。
+ * 页面上原来有两个「一键填充演示账号」的按钮，接后端后已删掉：
+ * 那时候是因为账号写死在前端，现在密码在数据库里，页面上不该出现它。
  *
  * ---------------------------------------------------------------------------
  * 视觉：极简高级灰
@@ -25,10 +24,6 @@ import { homePathFor } from "@/router/guard.jsx";
  *   · 按钮    黑底白字（主题里 colorPrimary 已经是近黑，这里不用管）
  * ---------------------------------------------------------------------------
  */
-const DEMO = [
-  { label: "管理员", username: "admin", password: "admin123" },
-  { label: "普通用户", username: "zhang", password: "123456" },
-];
 
 export default function Login() {
   const { login } = useAuth();
@@ -54,10 +49,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function fill(demo) {
-    form.setFieldsValue({ username: demo.username, password: demo.password });
   }
 
   return (
@@ -169,35 +160,6 @@ export default function Login() {
               </Button>
             </Form.Item>
           </Form>
-
-          {/* 演示账号：一条细线分隔，语气放低（11.5px 浅灰），
-              不跟主表单抢注意力 */}
-          <div
-            style={{
-              borderTop: "1px solid var(--line)",
-              marginTop: 20,
-              paddingTop: 15,
-              textAlign: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11.5,
-                color: "var(--ink-faint)",
-                letterSpacing: 0.3,
-                marginBottom: 10,
-              }}
-            >
-              演示账号（尚未接后端，账号写死在前端）
-            </div>
-            <Space size={8}>
-              {DEMO.map((d) => (
-                <Button key={d.username} size="small" onClick={() => fill(d)}>
-                  {d.label}
-                </Button>
-              ))}
-            </Space>
-          </div>
         </div>
 
         {/* ---------------- 页脚 ---------------- */}

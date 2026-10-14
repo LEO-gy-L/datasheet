@@ -279,3 +279,22 @@ def get_engine() -> RAGEngine:
     if _engine is None:
         _engine = RAGEngine()
     return _engine
+
+
+def reset_engine() -> None:
+    """丢掉单例，让下次调用重新创建（连带重新加载检索器）。
+
+    【2026-10-03 新增，配合网页端"入库"功能】
+
+    调用时机只有一个：**向量库的内容变了之后**（新建库 / 删除文档）。
+    引擎内部持有检索器（BM25 索引 + FAISS 向量库），而这些都是
+    "启动时读一次、之后吃内存"的东西 —— 磁盘变了它不会自己知道。
+
+    ⚠️ 注意它和 hybrid.reset_retriever() 的关系：
+        RAGEngine.__init__ 里走的 `get_retriever()` 也是同一个单例，
+        所以理论上清掉 _engine 之后重建，还是会拿到**旧的那个检索器**。
+        两个都要重置才真的生效。services/indexing_service.py 里的
+        `_reload_engine()` 就是按顺序调这两个 —— 别只调一个。
+    """
+    global _engine
+    _engine = None

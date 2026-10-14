@@ -11,3 +11,12 @@ requests>=2.31.0
 streamlit>=1.35.0
 fastapi>=0.110.0
 uvicorn>=0.29.0
+
+# --- 数据库与登录（2026-10-03 接入）---
+# 这三个其实早就装在这个 venv 里了（当初给 database.py 预留时装的），
+# 补进清单是为了"照 requirements.txt 重建环境"时不会缺。
+SQLAlchemy>=2.0.0
+PyJWT>=2.8.0
+python-multipart>=0.0.9
+# 说明：密码哈希**不需要** bcrypt/passlib —— 用的是标准库 hashlib.pbkdf2_hmac，
+# 原因见 backend/app/security/password.py（这个 venv 是 uv 建的、没有 pip）。

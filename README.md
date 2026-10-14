@@ -23,8 +23,7 @@ datasheet/
 ├── eval/                      ← 评测集 qa_pairs.json / qa_pairs_v2.json
 ├── backend/                   ← 全部 Python 代码
 │   ├── app/                   ← 线上服务（uvicorn 加载的就是这里）
-│   ├── scripts/               ← 手动跑的工具（问答、评测、诊断）
-│   └── legacy/                ← 已废弃脚本，只留作对比证据
+│   └── scripts/               ← 手动跑的工具（问答、评测）
 └── frontend/                  ← 网页界面（Vite + React，npm run dev 启动）
 ```
 
@@ -59,19 +58,18 @@ ingestion/figures.py ┘   （PDF→清洗）            （切块）           
 |---|---|---|
 | `app/main.py` | FastAPI 应用装配（**后端入口**） | 只做装配：建 app、挂 CORS、注册路由、启动时预热引擎 |
 | `app/config.py` | 配置中心 | **全项目唯一**数"项目根"在哪的地方，其他文件一律 `from backend.app.config import ROOT` |
-| `app/database.py` | 数据库连接（SQLAlchemy） | 已备好未接入：建表、开会话都在这里，加数据库功能时直接用 |
+| `app/database.py` | 数据库连接（SQLAlchemy） | SQLite `data/app.db`；建表、开会话都在这里 |
 | `app/api/` | 路由层 | 只收参数、调 service、转异常；不写业务 |
 | `app/schemas/` | 契约层 | 请求/响应字段定义，Pydantic 负责自动校验与 /docs 文档 |
-| `app/services/` | 业务层 | RAG 的编排，命令行 / Streamlit / 网页三个入口共用同一份 |
+| `app/services/` | 业务层 | RAG 的编排 + 用户/历史/反馈/文档的业务规则 |
 | `app/dependencies/` | 注入层 | 让接口"拿来就用"共享对象，也方便测试时替换成假对象 |
-| `app/retrieval/` | 检索层 | 向量化 + （下一步的）混合检索、重排 |
+| `app/retrieval/` | 检索层 | 向量化 + 混合检索、重排 |
 | `app/generation/` | 生成层 | 模型客户端与 prompt 措辞 |
 | `app/ingestion/` | 入库层 | PDF → 清洗 → 切块 → 向量库，离线跑 |
-| `app/models/` | 数据层 | ORM 表（现在为空，建表步骤写在它的 `__init__.py` 里） |
-| `app/common/` | 公共层 | 自定义异常 + 统一响应格式 |
+| `app/models/` | 数据层 | ORM 表：users / qa_history / feedbacks / documents |
+| `app/common/` | 公共层 | 自定义异常 |
 | `app/utils/` | 工具层 | 与业务无关的纯函数（现在为空，等真需要再放） |
-| `backend/scripts/` | 手动工具 | 问答、评测、诊断 —— 跑完看输出，不常驻 |
-| `backend/legacy/` | 历史证据 | 已废弃脚本，**不要运行** |
+| `backend/scripts/` | 手动工具 | 问答、评测 —— 跑完看输出，不常驻 |
 
 ### scripts/ 里每个脚本干什么
 
@@ -79,14 +77,7 @@ ingestion/figures.py ┘   （PDF→清洗）            （切块）           
 |---|---|---|
 | `chat.py` | 命令行问答（最快验证链路通不通） | `python -m backend.scripts.chat` |
 | `evaluate.py` | 跑评测集，算答案包含率 + 检索命中率 | `python -m backend.scripts.evaluate --k 6` |
-| `diag_crosslingual.py` | 中文提问 vs 英文提问的召回对比 | `python -m backend.scripts.diag_crosslingual` |
-| `scan_quality.py` | 全量扫描清洗产物的质量问题 | `python -m backend.scripts.scan_quality` |
-| `test_llm.py` | 验证 DeepSeek 密钥能不能调通 | `python -m backend.scripts.test_llm` |
 | `streamlit_app.py` | Streamlit 备用界面 | `python -m streamlit run backend/scripts/streamlit_app.py` |
-| `compare_pdfplumber.py` | 当年选型的对比证据 | 需先装 `pdfplumber`（不在 requirements 里，只为这一次对比用） |
-
-> `legacy/step3_vectorstore.py` 是旧命令的壳：它自己啥也不干，只是转调
-> `backend.app.ingestion.indexer`，让"老习惯"不失效。
 
 > 历史说明：更早的旧线路脚本（`p0_1_tables_v3.py`、`p1_1_chunk.py`、`load_split.py` 等）
 > 已经不在仓库里了。其中 `load_split.py` 的正则写错（`$$来源$$` 应为 `\[来源\]`）导致表格块全丢，
@@ -118,7 +109,7 @@ python -m venv .venv
 
 ```bash
 # 第0步：验证模型能通（看到回复 + token 用量即成功）
-python -m backend.scripts.test_llm
+python -m backend.scripts.chat
 
 # 第1步：表格 —— 提取 + 清洗 + 过滤伪表
 python -m backend.app.ingestion.tables

@@ -1,37 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-数据层：数据库表（ORM 模型）
-============================
-**现在是空的** —— 你还没建表。
+数据表模型汇总
+==============
+这个文件看起来"只是几行 import"，但它是**必须存在的**，原因在 SQLAlchemy 的机制：
 
-加一张表的完整步骤（三步）：
+    Base.metadata.create_all() 是拿 `Base.metadata` 里登记的表来建表的。
+    而一张表**只有在它的类被 import 执行过之后**，才会登记进去。
 
-  1. 打开 backend/app/database.py，里面已经有 Base（表的基类），不用改
+    也就是说：如果没人 import models/user.py，那么 User 类根本没被定义过，
+    create_all() 会安安静静地建出一个空数据库 —— 不报错，但一张表都没有。
+    这种"没报错但也没干活"的坑最难查。
 
-  2. 在本目录新建文件，例如 document.py：
-
-        from sqlalchemy import Integer, String
-        from sqlalchemy.orm import Mapped, mapped_column
-
-        from backend.app.database import Base
-
-
-        class Document(Base):
-            __tablename__ = "documents"          # 数据库里真实表名
-
-            id: Mapped[int] = mapped_column(Integer, primary_key=True)
-            filename: Mapped[str] = mapped_column(String(255), index=True)
-            pages: Mapped[int] = mapped_column(Integer, default=0)
-
-  3. 在下面把 import 打开（放在文件底部，避免循环 import）
-
-然后建表：
-        python -c "from backend.app.database import init_db; init_db()"
-
-为什么每张表都要有这个文件里 `__tablename__`：
-    SQLAlchemy 默认拿类名转小写当表名（Document -> document），
-    显式写出来更可控 —— 复数、下划线风格由你自己决定，改类名不会意外改表名。
+所以约定：**加新表 = 新建 models/xxx.py + 来这里加一行 import**。
+database.init_db() 里那句 `from backend.app import models` 就是靠这个文件把全部表带出来。
 """
+from __future__ import annotations
 
-# 建好模型文件后，把下面这行打开：
-# from backend.app.models.document import Document   # noqa: F401
+from backend.app.models.document import Document
+from backend.app.models.feedback import Feedback
+from backend.app.models.qa_history import QaHistory
+from backend.app.models.user import User
+
+__all__ = ["User", "QaHistory", "Feedback", "Document"]

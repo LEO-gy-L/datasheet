@@ -11,10 +11,6 @@
     chat.py                 命令行问答（最快验证链路通不通）
     streamlit_app.py        Streamlit 网页问答（备用的简易界面）
     evaluate.py             跑评测集，算答案包含率 + 检索命中率
-    test_llm.py             验证 DeepSeek 密钥能不能调通（一次性）
-    diag_crosslingual.py    中文提问 vs 英文提问的召回对比（诊断）
-    scan_quality.py         全量扫描清洗产物的质量问题（诊断）
-    compare_pdfplumber.py   当年选型的对比证据（pdfplumber vs PyMuPDF）
 
 运行方式（**在项目根目录**，两种都行）：
 

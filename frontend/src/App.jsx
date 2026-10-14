@@ -11,6 +11,7 @@ import AdminFeedback from "@/views/admin/Feedback.jsx";
 import Ingest from "@/views/admin/Ingest.jsx";
 import Users from "@/views/admin/Users.jsx";
 import Assistant from "@/views/user/Assistant.jsx";
+import History from "@/views/user/History.jsx";
 import UserFeedback from "@/views/user/Feedback.jsx";
 
 /**
@@ -57,6 +58,8 @@ export default function App() {
       >
         <Route path="/assistant" element={<Assistant />} />
         <Route path="/feedback" element={<UserFeedback />} />
+        {/* 历史问答。数据在 qa_history 表，由 /api/ask 答完后自动写入 */}
+        <Route path="/history" element={<History />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/password" element={<ChangePassword />} />
       </Route>

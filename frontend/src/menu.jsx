@@ -1,5 +1,6 @@
 import {
   CommentOutlined,
+  HistoryOutlined,
   IdcardOutlined,
   RobotOutlined,
   TeamOutlined,
@@ -41,10 +42,14 @@ const ADMIN_MENU = [
   { key: "/admin/profile", icon: <IdcardOutlined />, label: "管理员信息" },
 ];
 
-/** 普通用户：datasheet 助理 / 问题反馈 / 用户信息 */
+/** 普通用户：datasheet 助理 / 问题反馈 / 历史问答 / 用户信息 */
 const USER_MENU = [
   { key: "/assistant", icon: <RobotOutlined />, label: "datasheet 助理" },
   { key: "/feedback", icon: <CommentOutlined />, label: "问题反馈" },
+  // 「历史问答」刻意放在「用户信息」**左边**：它跟助理、反馈一样属于"日常使用动线"
+  // （问完 → 回顾 → 提意见），而用户信息是设置类，放在最后符合习惯。
+  // 它不在助理页里，是独立一页 —— 所以路由要新加一条（见 App.jsx）。
+  { key: "/history", icon: <HistoryOutlined />, label: "历史问答" },
   { key: "/profile", icon: <UserOutlined />, label: "用户信息" },
 ];
 

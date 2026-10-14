@@ -473,6 +473,129 @@
   font-size: 11.5px;
 }
 
+/* =================================================== ④.5 手册选择器 */
+/* 【2026-10-03 P5 新增】
+   位置：输入栏正上方，左对齐的一个小胶囊。
+   组件在 components/DocPicker.jsx，这里只管长相。
+
+   为什么放在输入栏上方的**里面**（而不是页面顶上）：
+     它修饰的是"这一个问题"的范围，紧挨着输入框才有这个语义。
+     放到页面顶栏就跟"这一问"脱钩了，看着像一个全局设置。 */
+.ds-assistant .scopebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px 0;
+  flex-shrink: 0;
+}
+
+.ds-assistant .docpicker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;                 /* 再长就开始挤压输入框了 */
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.ds-assistant .docpicker-btn:hover:not(:disabled) {
+  border-color: var(--text-faint);
+  color: var(--text);
+}
+.ds-assistant .docpicker-btn.open {
+  border-color: var(--text);
+  color: var(--text);
+}
+/* 选中了具体某份手册（非"全部手册"）时加一点存在感 ——
+   这一点点视觉差异很重要：用户很容易忘了自己上次限定在某份手册上，
+   然后奇怪"怎么问别的型号都答不出来"。 */
+.ds-assistant .docpicker-btn.active {
+  border-color: var(--text);
+  background: var(--surface-muted);
+  color: var(--text);
+  font-weight: 500;
+}
+.ds-assistant .docpicker-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* 文件名截断：CH32F103_Datasheet_CN.pdf 这种长名字要把省略号打在**中间**更好认，
+   但 text-overflow 只支持末尾省略，所以退而求其次用末尾 + Tooltip 补全。 */
+.ds-assistant .docpicker-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-assistant .docpicker-caret {
+  flex-shrink: 0;
+  opacity: .6;
+}
+
+/* -------------------------------------------------- 下拉弹层 */
+/* 注意：这几条**不能**写成 .ds-assistant .docmenu ——
+   弹层被 render 到 .ds-assistant 内部（getPopupContainer 指定的），
+   但它不是 .ds-assistant 的**后代**吗？是的，是后代。
+   那为什么还写 .docmenu 而不是 .ds-assistant .docmenu？
+   为了保险：万一将来有人改了 getPopupContainer 把它挂到 body，
+   这一整段样式就会**静默失效**（弹层变成没有边框的白块），
+   而这类"样式忽然没了"的问题很难往"容器换了"上去想。
+   代价是 .docmenu 这个类名必须足够独特 —— 它确实是（全局搜只有这里用）。 */
+.docmenu {
+  --line: #e4e4e7;
+  --surface: #ffffff;
+  --surface-muted: #f4f4f5;
+  --text: #18181b;
+  --text-soft: #52525b;
+  --text-faint: #a1a1aa;
+
+  min-width: 260px;
+  max-width: 380px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.docmenu-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.docmenu-item:hover { background: var(--surface-muted); }
+.docmenu-item.active { background: var(--surface-muted); }
+.docmenu-name {
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.docmenu-item.active .docmenu-name { font-weight: 600; }
+.docmenu-meta {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+.docmenu-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 6px;
+}
+.docmenu-empty {
+  padding: 12px 10px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.6;
+}
+
 /* ------------------------------------------------- ⑤ 响应式与动效偏好 */
 /* 原 css/responsive.css */
 @media (max-width: 900px) {

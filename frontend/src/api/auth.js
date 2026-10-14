@@ -1,81 +1,79 @@
-import { ACCOUNTS, delay } from "@/mock/data.js";
 import { request, setToken } from "./client.js";
 
 /**
  * 认证相关接口
  * ============
- * 【现在】只做前端：在本地账号表里比对，不发网络请求。
- * 【接后端后】把每个函数体里 return 后面那一行换掉即可，
- *            返回结构是照着"以后接口会长什么样"定的，页面代码不用动。
+ * 【2026-10-03】从 mock 换成真后端。后端在 backend/app/api/auth.py。
  *
- * 注意最下面那行 `void request;` —— 它只是为了防止 ESLint 报
- * "request 导入了却没用到"。接后端后删掉那行，把上面的 mock 换成真调用。
+ * 页面代码（Login.jsx / Profile.jsx / ChangePassword.jsx）**一行都没改** ——
+ * 因为这套函数的名字、参数、返回结构在写 mock 的那天就照着
+ * "以后接口会长什么样"定好了。这就是当初那层 mock 的作用。
  */
 
 /**
  * 登录。
  *
- * 返回：{ username, name, role, email, token }
- *   role 只有两种取值：'admin'（管理员）| 'user'（普通用户），
- *   路由守卫和侧边栏菜单都靠它来分叉。
+ * 返回：{ id, username, name, role, email, status, createdAt, lastLogin }
+ *   ⚠️ **不含 token** —— token 由本函数就地存进 localStorage，不往外传。
+ *      为什么这样设计：AuthContext 会把返回的这坨对象整个存进 localStorage
+ *      当作"当前用户"，如果 token 也在里面，等于同一份凭证存了两处，
+ *      清理时就要记得清两处（漏一处就是"登出后还能用旧凭证"的安全问题）。
+ *
+ * role 只有两种取值：'admin'（管理员）| 'user'（普通用户），
+ * 路由守卫和侧边栏菜单都靠它来分叉。
  */
 export async function login(username, password) {
-  /* 【接后端后】换成：
-     return request("/auth/login", { method: "POST", body: { username, password } });
-  */
-  return mockLogin(username, password);
+  const data = await request("/auth/login", {
+    method: "POST",
+    body: { username, password },
+  });
+
+  setToken(data.token);
+
+  // 用解构把 token 摘出去（跟当初 mock 版摘掉 password 是同一个理由）
+  const { token: _token, ...user } = data;
+  return user;
 }
 
 /**
- * 本地版登录：拿账号密码去 ACCOUNTS 里找完全匹配的一条。
+ * 拿当前登录用户。
  *
- * 为什么包一层 Promise 还要故意加 260ms 延迟：
- *   不加延迟的话，"点登录 -> 瞬间跳转"，你就永远看不到按钮的 loading 态，
- *   等真接上后端才发现 loading 早写错了。先把异步路径跑真，后面才不出岔子。
+ * 用途：应用启动时调一次，拿本地存的 token 去问后端"它还有效吗、我是谁"。
+ * 解决的问题：token 可能已经过期（默认 12 小时），或者管理员改过你的名字 ——
+ * 光看 localStorage 里那份副本是不知道的。
  */
-function mockLogin(username, password) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const hit = ACCOUNTS.find(
-        (a) => a.username === username.trim() && a.password === password
-      );
-      if (!hit) {
-        reject(new Error("账号或密码不对"));
-        return;
-      }
-      // 用解构把 password 摘出去，避免密码被写进 localStorage
-      const { password: _omit, ...safe } = hit;
-      resolve({ ...safe, token: `mock-token-${hit.username}` });
-    }, 260);
-  });
+export async function me() {
+  return request("/auth/me");
 }
 
-/** 退出 / 切换账户：清掉本地凭证即可，后端阶段才需要通知服务端作废 token */
+/** 退出 / 切换账户：通知后端 + 清掉本地凭证。 */
 export function logout() {
-  /* 【接后端后】前面补一行：
-     request("/auth/logout", { method: "POST" }).catch(() => {});
-     （加 catch 是因为"作废 token 失败"不该拦住用户退出，本地照样要清干净） */
+  /* 加 .catch 是刻意的：后端暂时连不上时，"通知服务端"这件事失败
+     不该拦住用户退出 —— 本地凭证照样要清干净，否则他就被卡在登录态里出不去了。
+     （后端那个接口其实什么也不做，只返回 ok，原因见 api/auth.py 的注释） */
+  request("/auth/logout", { method: "POST" }).catch(() => {});
   setToken("");
 }
 
 /**
  * 修改密码。
- * 【接后端后】return request("/auth/password", { method: "PUT", body: { oldPassword, newPassword } });
+ * ⚠️ 后端会再校验一次"新密码至少 6 位"，这里的前端校验只是为了让用户
+ *    不用等一个来回就知道填错了。
  */
 export async function changePassword({ oldPassword, newPassword }) {
   if (!oldPassword || !newPassword) throw new Error("旧密码和新密码都要填");
   if (newPassword.length < 6) throw new Error("新密码至少 6 位");
-  return delay({ ok: true }, 320);
+  return request("/auth/password", {
+    method: "PUT",
+    body: { oldPassword, newPassword },
+  });
 }
 
 /**
  * 改自己的名字 / 邮箱。
- * 【接后端后】return request("/auth/profile", { method: "PUT", body: { name, email } });
+ * 返回更新后的用户信息（页面拿它同步顶栏显示的名字）。
  */
 export async function updateProfile({ name, email }) {
   if (!name || !name.trim()) throw new Error("名字不能为空");
-  return delay({ ok: true, name: name.trim(), email }, 320);
+  return request("/auth/profile", { method: "PUT", body: { name, email } });
 }
-
-// 接后端后删掉这行（见文件头说明）
-void request;

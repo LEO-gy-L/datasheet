@@ -1,5 +1,7 @@
 # 密钥 —— 绝对禁止入库
 .env
+.env.bak
+*.bak
 
 # Python 虚拟环境与缓存
 .venv/

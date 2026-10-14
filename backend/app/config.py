@@ -17,6 +17,7 @@
     判断标准：这个文件应该能被任何模块 import，而它自己不 import 任何业务模块
     （否则就会形成循环 import）。
 """
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -34,6 +35,17 @@ DATASHEETS_DIR = ROOT / "datasheets"  # 原始 PDF
 STORE_DIR = ROOT / "vectorstore"      # FAISS 向量库
 EVAL_DIR = ROOT / "eval"              # 评测集 qa_pairs*.json
 ENV_FILE = ROOT / ".env"              # 密钥文件（已在 .gitignore 里）
+
+# ---- 入库流水线的三道中间产物目录（2026-10-03 新增）----
+# 加在这里而不是在服务层现算，理由和本文件开头的说明一样：
+#   目录名一旦有多处副本，改动时漏掉一处，症状是"解析产物在 A 目录、
+#   切块却去 B 目录找" —— 报"找不到产物"，但两个目录各自看都是对的。
+# ⚠️ 目录名后面那个 v2 / v5 是**版本号**，不是随手起的：
+#    改了清洗规则之后要换版本号重跑，好让新老产物并存、可对比、可回退。
+#    所以这三个值**不能**合并成同一个变量。
+TEXT_DIR = DATA_DIR / "text_v2"       # 正文清洗产物：text_v2/<stem>/page_XXXX.md
+TABLE_DIR = DATA_DIR / "tables_v5"    # 表格清洗产物：tables_v5/<stem>/page_XXXX.md
+CHUNKS_DIR = DATA_DIR / "chunks_v2"   # 切块产物：chunks_v2/<stem>/chunks.jsonl
 
 # 读取 .env 里的 DEEPSEEK_API_KEY / ZHIPUAI_API_KEY。
 # 放在模块顶层：任何模块只要 import 了 config，密钥就已经就绪，不用各自再写一遍。
@@ -145,3 +157,27 @@ DB_FILE = DATA_DIR / "app.db"                      # SQLite：整个库就是一
 DATABASE_URL = f"sqlite:///{DB_FILE}"              # SQLAlchemy 的连接串写法
 # 以后换 PostgreSQL 只改这一行，例如：
 #   DATABASE_URL = "postgresql+psycopg://user:pass@localhost:5432/datasheet"
+
+# ---------------------------------------------------------------- 认证（2026-10-03 新增）
+# JWT 签名密钥。**正式部署必须在 .env 里覆盖它**：
+#   ① 用默认值的话，任何看过这份源码的人都能自己签一张管理员 token
+#   ② 反过来，密钥一旦更换，所有已发出的 token 立刻失效（用户需要重新登录）——
+#      这是它的工作方式，不是 bug
+# 生成一个随机密钥：python -c "import secrets; print(secrets.token_urlsafe(32))"
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-insecure-secret-change-me")
+
+# HS256 = HMAC + SHA256。单机服务用它最简单：一把密钥既签又验，不需要非对称密钥对。
+# 换 RS256 的场景是"签发方和验证方不是同一个服务"，我们不是。
+JWT_ALGORITHM = "HS256"
+
+# 12 小时：够覆盖一个工作日的连续使用，又不至于长期有效。
+# ⚠️ JWT 的代价在这里体现：没有"立刻踢人下线"的能力，改密码后旧 token 仍然有效到过期。
+#    对课程项目够用；真要做强制下线，得额外维护一张"已登出 token"表。
+TOKEN_EXPIRE_MINUTES = 60 * 12
+
+# 首次启动自动创建的管理员账号。
+# 数据库建好之后是空的 —— 没有这个种子账号就**谁也进不去系统**，
+# 而"登录之后才能创建账号"是个鸡生蛋问题，所以默认管理员必须由程序自己建。
+# 正式部署时把 ADMIN_INIT_PASSWORD 写进 .env，改密码而不用改代码。
+ADMIN_INIT_USERNAME = os.getenv("ADMIN_INIT_USERNAME", "admin")
+ADMIN_INIT_PASSWORD = os.getenv("ADMIN_INIT_PASSWORD", "admin123")
